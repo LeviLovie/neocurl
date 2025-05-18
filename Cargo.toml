@@ -8,7 +8,7 @@ documentation = "https://docs.rs/neocurl"
 keywords = ["request", "rest", "api", "test", "request"]
 categories = ["command-line-utilities", "development-tools"]
 exclude = ["/target", "**/*.rs.bk", "**/*.tmp"]
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 
 [dependencies]
@@ -26,4 +26,8 @@ tracing-subscriber = "0.3.19"
 
 [[bin]]
 name = "ncurl"
+path = "src/main.rs"
+
+[[bin]]
+name = "neocurl"
 path = "src/main.rs"
