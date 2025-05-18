@@ -1,4 +1,4 @@
-request({
+define({
     name = "test",
     func = function()
         result = send({
@@ -24,7 +24,7 @@ request({
     end,
 })
 
-request({
+define({
     name = "test2",
     func = function()
         result = send({
@@ -40,42 +40,42 @@ request({
     end,
 })
 
-request({
+define({
     name = "pass",
     func = function()
         print("Passing...")
     end,
 })
 
-request({
+define({
     name = "test_run",
     func = function()
         run("test2")
     end,
 })
 
-request({
+define({
     name = "test_many",
     func = function()
         run("test2", 5)
     end,
 })
 
-request({
+define({
     name = "test_many_async",
     func = function()
         run_async({"test2"}, 5)
     end,
 })
 
-request({
+define({
     name = "test_async",
     func = function()
         run_async({"test2", "pass"}, 25)
     end,
 })
 
-request({
+define({
     name = "stress_async",
     func = function()
         run_async({"test", "test2"}, 500, 25)

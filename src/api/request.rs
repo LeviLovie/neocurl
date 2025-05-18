@@ -2,31 +2,31 @@ pub fn reg(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> anyho
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
 
-    reg_request(lua, registry)?;
+    reg_define(lua, registry)?;
     reg_send(lua)?;
     reg_print_response(lua)?;
 
     Ok(())
 }
 
-fn reg_request(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> anyhow::Result<()> {
-    let span = tracing::debug_span!("reg_request");
+fn reg_define(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> anyhow::Result<()> {
+    let span = tracing::debug_span!("reg_define");
     let _enter = span.enter();
 
     let globals = lua.globals();
-    let request_fn = lua
+    let define_fn = lua
         .create_function(move |_, req: mlua::Table| {
             let mut registry = registry.lock().unwrap();
             registry.push(req);
             Ok(())
         })
         .map_err(|e| {
-            tracing::error!("Failed to create request function: {}", e);
-            anyhow::anyhow!("Failed to create request function")
+            tracing::error!("Failed to create define function: {}", e);
+            anyhow::anyhow!("Failed to create define function")
         })?;
-    globals.set("request", request_fn).map_err(|e| {
-        tracing::error!("Failed to set request function in globals: {}", e);
-        anyhow::anyhow!("Failed to set request function in globals")
+    globals.set("define", define_fn).map_err(|e| {
+        tracing::error!("Failed to set define function in globals: {}", e);
+        anyhow::anyhow!("Failed to set define function in globals")
     })?;
 
     Ok(())
