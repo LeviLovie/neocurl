@@ -1,9 +1,11 @@
 mod api;
 pub mod registry;
+mod repl;
+pub mod run_request;
 
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
-use mlua::{Function, Lua};
+use mlua::Lua;
 use std::{cell::RefCell, rc::Rc};
 use tracing::{debug, error, span, warn, Level};
 
@@ -66,9 +68,12 @@ fn run() -> Result<()> {
         }
         Commands::Run { name, args } => {
             debug!("Running request: {}", name);
-            run_request(registry.clone(), args.clone(), name.clone())?;
+            run_request::run(registry.clone(), args.clone(), name.clone())?;
         }
-        Commands::Repl => unimplemented!("REPL mode is not implemented yet"),
+        Commands::Repl => {
+            debug!("Starting REPL");
+            repl::repl(registry.clone())?;
+        }
     }
 
     Ok(())
@@ -98,31 +103,4 @@ fn read_file(args: Args) -> Result<(String, String)> {
     })?;
 
     return Ok((file, file_contents));
-}
-
-fn run_request(
-    registry: registry::RequestRegistry,
-    _args: Vec<String>,
-    req_name: String,
-) -> Result<()> {
-    let span = tracing::debug_span!("run_request");
-    let _enter = span.enter();
-
-    for req in registry.borrow().iter() {
-        let name: String = req.get("name").unwrap_or_default();
-        if name == req_name {
-            let func: Function = req.get("func").map_err(|e| {
-                error!("Failed to get function from request: {}", e);
-                anyhow!("Failed to get function from request")
-            })?;
-            let _: () = func.call(()).map_err(|e| {
-                error!("Failed to call function: {}", e);
-                anyhow!("Failed to call function")
-            })?;
-            return Ok(());
-        }
-    }
-
-    error!("No request found in registry. Run list command to see available requests.");
-    return Err(anyhow!("No request found in registry"));
 }
