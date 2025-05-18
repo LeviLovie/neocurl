@@ -1,6 +1,5 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use mlua::Function;
-use std::sync::Mutex;
 use tracing::error;
 
 pub fn run(registry: crate::registry::RequestRegistry, req_name: String) -> Result<()> {

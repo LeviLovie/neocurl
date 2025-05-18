@@ -3,11 +3,11 @@ pub mod registry;
 mod repl;
 pub mod run_request;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use mlua::Lua;
 use std::sync::{Arc, Mutex};
-use tracing::{debug, error, span, warn, Level};
+use tracing::{Level, debug, error, span, warn};
 
 #[derive(Clone, Parser)]
 struct Args {
@@ -46,7 +46,7 @@ fn run() -> Result<()> {
     let registry: registry::RequestRegistry = Arc::new(Mutex::new(Vec::new()));
 
     let lua = Lua::new();
-    api::reg(&lua, registry.clone())?;
+    api::reg(&lua, registry.clone(), file_contents.clone())?;
     debug!("Lua initialized successfully");
 
     lua.load(file_contents.as_str()).exec().map_err(|e| {
