@@ -25,16 +25,7 @@ enum Commands {
     List,
 }
 
-fn main() {
-    tracing_subscriber::fmt::init();
-
-    if let Err(e) = run() {
-        error!("Error occured: {}", e);
-        std::process::exit(1);
-    }
-}
-
-fn run() -> Result<()> {
+pub fn run() -> Result<()> {
     let span = tracing::info_span!("run");
     let _enter = span.enter();
 
