@@ -48,6 +48,13 @@ define({
 })
 
 define({
+    name = "fail",
+    func = function()
+        assert("Failing", false)
+    end,
+})
+
+define({
     name = "test_run",
     func = function()
         run("test2")

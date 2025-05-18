@@ -3,11 +3,11 @@ pub mod registry;
 mod repl;
 pub mod run_request;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use mlua::Lua;
 use std::sync::{Arc, Mutex};
-use tracing::{Level, debug, error, span, warn};
+use tracing::{debug, error, span, warn, Level};
 
 #[derive(Clone, Parser)]
 struct Args {
@@ -70,6 +70,13 @@ fn run() -> Result<()> {
         Commands::Run { name } => {
             debug!("Running request: {}", name);
             run_request::run(registry.clone(), name.clone())?;
+            let (_, failed) = api::test_summary();
+            if failed > 0 {
+                error!("Some requests failed");
+                std::process::exit(1);
+            } else {
+                debug!("All requests completed successfully");
+            }
         }
         Commands::Repl => {
             debug!("Starting REPL");

@@ -1,3 +1,10 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use once_cell::sync::Lazy;
+
+static PASSED: Lazy<AtomicUsize> = Lazy::new(|| AtomicUsize::new(0));
+static FAILED: Lazy<AtomicUsize> = Lazy::new(|| AtomicUsize::new(0));
+
 pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
@@ -18,8 +25,10 @@ fn reg_assert(lua: &mlua::Lua) -> anyhow::Result<()> {
     let fn_assert = lua
         .create_function(|_, (title, cond): (String, bool)| {
             if cond {
+                PASSED.fetch_add(1, Ordering::Relaxed);
                 tracing::info!("Test passed: {}", title);
             } else {
+                FAILED.fetch_add(1, Ordering::Relaxed);
                 tracing::error!("Test failed: {}", title);
             }
             Ok(())
@@ -44,8 +53,10 @@ fn reg_assert_not(lua: &mlua::Lua) -> anyhow::Result<()> {
     let fn_assert_not = lua
         .create_function(|_, (title, cond): (String, bool)| {
             if !cond {
+                PASSED.fetch_add(1, Ordering::Relaxed);
                 tracing::info!("Test passed: {}", title);
             } else {
+                FAILED.fetch_add(1, Ordering::Relaxed);
                 tracing::error!("Test failed: {}", title);
             }
             Ok(())
@@ -70,8 +81,10 @@ fn reg_assert_eq(lua: &mlua::Lua) -> anyhow::Result<()> {
     let fn_assert_eq = lua
         .create_function(|_, (title, a, b): (String, i32, i32)| {
             if a == b {
+                PASSED.fetch_add(1, Ordering::Relaxed);
                 tracing::info!("Test passed: {}", title);
             } else {
+                FAILED.fetch_add(1, Ordering::Relaxed);
                 tracing::error!("Test failed: {}", title);
             }
             Ok(())
@@ -96,8 +109,10 @@ fn reg_assert_ne(lua: &mlua::Lua) -> anyhow::Result<()> {
     let fn_assert_ne = lua
         .create_function(|_, (title, a, b): (String, i32, i32)| {
             if a != b {
+                PASSED.fetch_add(1, Ordering::Relaxed);
                 tracing::info!("Test passed: {}", title);
             } else {
+                FAILED.fetch_add(1, Ordering::Relaxed);
                 tracing::error!("Test failed: {}", title);
             }
             Ok(())
@@ -112,4 +127,12 @@ fn reg_assert_ne(lua: &mlua::Lua) -> anyhow::Result<()> {
     })?;
 
     Ok(())
+}
+
+pub fn test_summary() -> (u32, u32) {
+    let passed = PASSED.load(Ordering::Relaxed);
+    let failed = FAILED.load(Ordering::Relaxed);
+    tracing::info!("Test summary: {} passed, {} failed", passed, failed);
+
+    return (passed as u32, failed as u32);
 }

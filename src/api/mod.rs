@@ -20,3 +20,5 @@ pub fn reg(
 
     Ok(())
 }
+
+pub use test::test_summary;
