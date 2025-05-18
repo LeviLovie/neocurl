@@ -6,7 +6,7 @@ pub mod run_request;
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use mlua::Lua;
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, Mutex};
 use tracing::{debug, error, span, warn, Level};
 
 #[derive(Clone, Parser)]
@@ -21,7 +21,7 @@ struct Args {
 #[derive(Subcommand, Clone)]
 enum Commands {
     Repl,
-    Run { name: String, args: Vec<String> },
+    Run { name: String },
     List,
 }
 
@@ -43,7 +43,7 @@ fn run() -> Result<()> {
     let (_, file_contents) = read_file(args.clone())?;
     debug!("File read successfully");
 
-    let registry: registry::RequestRegistry = Rc::new(RefCell::new(Vec::new()));
+    let registry: registry::RequestRegistry = Arc::new(Mutex::new(Vec::new()));
 
     let lua = Lua::new();
     api::reg(&lua, registry.clone())?;
@@ -61,14 +61,15 @@ fn run() -> Result<()> {
     match args.command {
         Commands::List => {
             debug!("Listing requests");
-            for (i, req) in registry.borrow().iter().enumerate() {
+            let registry = registry.lock().unwrap();
+            for (i, req) in registry.iter().enumerate() {
                 let name: String = req.get("name").unwrap_or_default();
                 println!("{}: {}", i + 1, name);
             }
         }
-        Commands::Run { name, args } => {
+        Commands::Run { name } => {
             debug!("Running request: {}", name);
-            run_request::run(registry.clone(), args.clone(), name.clone())?;
+            run_request::run(registry.clone(), name.clone())?;
         }
         Commands::Repl => {
             debug!("Starting REPL");

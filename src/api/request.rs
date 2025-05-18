@@ -16,7 +16,8 @@ fn reg_request(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> a
     let globals = lua.globals();
     let request_fn = lua
         .create_function(move |_, req: mlua::Table| {
-            registry.borrow_mut().push(req.clone());
+            let mut registry = registry.lock().unwrap();
+            registry.push(req);
             Ok(())
         })
         .map_err(|e| {

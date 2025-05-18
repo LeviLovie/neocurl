@@ -1,4 +1,4 @@
 use mlua::Table;
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, Mutex};
 
-pub type RequestRegistry = Rc<RefCell<Vec<Table>>>;
+pub type RequestRegistry = Arc<Mutex<Vec<Table>>>;

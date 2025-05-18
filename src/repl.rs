@@ -18,16 +18,16 @@ pub fn repl(registry: crate::registry::RequestRegistry) -> Result<()> {
                 match parts[0] {
                     "list" => {
                         debug!("Listing requests");
-                        for (i, req) in registry.borrow().iter().enumerate() {
+                        let registry = registry.lock().unwrap();
+                        for (i, req) in registry.iter().enumerate() {
                             let name: String = req.get("name").unwrap_or_default();
                             println!("{}: {}", i + 1, name);
                         }
                     }
                     "run" if parts.len() >= 2 => {
                         let name = parts[1].to_string();
-                        let args = parts[2..].iter().map(|s| s.to_string()).collect();
                         debug!("Running request from REPL: {}", name);
-                        if let Err(err) = run_request::run(registry.clone(), args, name) {
+                        if let Err(err) = run_request::run(registry.clone(), name) {
                             eprintln!("Error: {}", err);
                         }
                     }

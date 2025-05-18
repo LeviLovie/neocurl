@@ -12,14 +12,14 @@ request({
 
         print_response(result)
 
-        assert("status", result.status == 200)
-        assert_not("status", result.status > 400)
+        assert("200 status", result.status == 200)
+        assert_not("status < 400", result.status > 400)
         assert_eq("status", result.status, 200)
         assert_ne("status", result.status, 404)
 
-        assert("status", result.status ~= 200)
-        assert_not("status", result.status < 400)
-        assert_eq("status", result.status, 400)
+        assert("200 status", result.status ~= 200)
+        assert_not("status < 400", result.status < 400)
+        assert_eq("status == 400", result.status, 400)
         assert_ne("status", result.status, 200)
     end,
 })
@@ -36,7 +36,20 @@ request({
             },
         })
 
-        print_response(result)
+        print("Status: " .. result.status)
     end,
 })
 
+request({
+    name = "test_run",
+    func = function()
+        run("test2")
+    end,
+})
+
+request({
+    name = "test_many",
+    func = function()
+        run("test2", 5)
+    end,
+})

@@ -1,16 +1,14 @@
 use anyhow::{anyhow, Result};
 use mlua::Function;
+use std::sync::Mutex;
 use tracing::error;
 
-pub fn run(
-    registry: crate::registry::RequestRegistry,
-    _args: Vec<String>,
-    req_name: String,
-) -> Result<()> {
-    let span = tracing::debug_span!("run_request");
+pub fn run(registry: crate::registry::RequestRegistry, req_name: String) -> Result<()> {
+    let span = tracing::debug_span!("run");
     let _enter = span.enter();
 
-    for req in registry.borrow().iter() {
+    let registry = registry.lock().unwrap().clone();
+    for req in registry.iter() {
         let name: String = req.get("name").unwrap_or_default();
         if name == req_name {
             let func: Function = req.get("func").map_err(|e| {
