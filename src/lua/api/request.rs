@@ -1,4 +1,4 @@
-pub fn reg(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> anyhow::Result<()> {
+pub fn reg(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
 
@@ -9,7 +9,7 @@ pub fn reg(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> anyho
     Ok(())
 }
 
-fn reg_define(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> anyhow::Result<()> {
+fn reg_define(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Result<()> {
     let span = tracing::debug_span!("reg_define");
     let _enter = span.enter();
 
@@ -18,6 +18,7 @@ fn reg_define(lua: &mlua::Lua, registry: crate::registry::RequestRegistry) -> an
         .create_function(move |_, req: mlua::Table| {
             let mut registry = registry.lock().unwrap();
             registry.push(req);
+
             Ok(())
         })
         .map_err(|e| {

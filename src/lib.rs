@@ -1,14 +1,9 @@
-mod api;
-pub mod lua_libs;
-pub mod registry;
+mod lua;
 mod repl;
-pub mod run_request;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
-use mlua::Lua;
-use std::sync::{Arc, Mutex};
-use tracing::{debug, error, span, warn, Level};
+use tracing::{Level, error, span, warn};
 
 #[derive(Clone, Parser)]
 struct Args {
@@ -33,47 +28,28 @@ pub fn run() -> Result<()> {
     let args = Args::parse();
 
     let (_, file_contents) = read_file(args.clone())?;
-    debug!("File read successfully");
 
-    let registry: registry::RequestRegistry = Arc::new(Mutex::new(Vec::new()));
-
-    let lua = Lua::new();
-    api::reg(&lua, registry.clone(), file_contents.clone())?;
-    lua_libs::load(&lua)?;
-    debug!("Lua initialized successfully");
-
-    lua.load(file_contents.as_str()).exec().map_err(|e| {
-        anyhow!(
-            "Failed to execute Lua script: {}. Error: {}",
-            args.file.as_deref().unwrap_or(""),
-            e
-        )
-    })?;
-    debug!("Lua script loaded successfully");
+    let mut runtime = lua::LuaRuntime::builder()
+        .with_script(file_contents)
+        .libs()
+        .build()?;
 
     match args.command {
         Commands::List => {
-            debug!("Listing requests");
-            let registry = registry.lock().unwrap();
-            for (i, req) in registry.iter().enumerate() {
-                let name: String = req.get("name").unwrap_or_default();
+            for (i, name) in runtime.list_refinitions().iter().enumerate() {
                 println!("{}: {}", i + 1, name);
             }
         }
         Commands::Run { name } => {
-            debug!("Running request: {}", name);
-            run_request::run(registry.clone(), name.clone())?;
-            let (_, failed) = api::test_summary();
+            runtime.run_definition(name)?;
+
+            let (_, failed) = runtime.test_summary();
             if failed > 0 {
-                error!("Some requests failed");
                 std::process::exit(1);
-            } else {
-                debug!("All requests completed successfully");
             }
         }
         Commands::Repl => {
-            debug!("Starting REPL");
-            repl::repl(registry.clone())?;
+            repl::repl(&mut runtime)?;
         }
     }
 

@@ -1,10 +1,9 @@
-use crate::run_request;
+use crate::lua::LuaRuntime;
 use anyhow::Result;
 use linefeed::{Interface, ReadResult};
-use tracing::debug;
 
-pub fn repl(registry: crate::registry::RequestRegistry) -> Result<()> {
-    let reader = Interface::new("neocurl")?;
+pub fn repl(runtime: &mut LuaRuntime) -> Result<()> {
+    let reader = Interface::new("ncurl")?;
     reader.set_prompt(">> ")?;
 
     loop {
@@ -17,19 +16,15 @@ pub fn repl(registry: crate::registry::RequestRegistry) -> Result<()> {
 
                 match parts[0] {
                     "list" => {
-                        debug!("Listing requests");
-                        let registry = registry.lock().unwrap();
-                        for (i, req) in registry.iter().enumerate() {
-                            let name: String = req.get("name").unwrap_or_default();
+                        for (i, name) in runtime.list_refinitions().iter().enumerate() {
                             println!("{}: {}", i + 1, name);
                         }
                     }
                     "run" if parts.len() >= 2 => {
                         let name = parts[1].to_string();
-                        debug!("Running request from REPL: {}", name);
-                        if let Err(err) = run_request::run(registry.clone(), name) {
-                            eprintln!("Error: {}", err);
-                        }
+
+                        runtime.run_definition(name)?;
+                        let _ = runtime.test_summary();
                     }
                     "exit" | "quit" => {
                         println!("Exiting REPL.");

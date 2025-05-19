@@ -5,6 +5,14 @@ use once_cell::sync::Lazy;
 static PASSED: Lazy<AtomicUsize> = Lazy::new(|| AtomicUsize::new(0));
 static FAILED: Lazy<AtomicUsize> = Lazy::new(|| AtomicUsize::new(0));
 
+pub fn test_summary() -> (usize, usize) {
+    let passed = PASSED.load(Ordering::Relaxed);
+    let failed = FAILED.load(Ordering::Relaxed);
+    tracing::info!("Test summary: {} passed, {} failed", passed, failed);
+
+    return (passed as usize, failed as usize);
+}
+
 pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
@@ -127,12 +135,4 @@ fn reg_assert_ne(lua: &mlua::Lua) -> anyhow::Result<()> {
     })?;
 
     Ok(())
-}
-
-pub fn test_summary() -> (u32, u32) {
-    let passed = PASSED.load(Ordering::Relaxed);
-    let failed = FAILED.load(Ordering::Relaxed);
-    tracing::info!("Test summary: {} passed, {} failed", passed, failed);
-
-    return (passed as u32, failed as u32);
 }

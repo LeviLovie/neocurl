@@ -8,7 +8,7 @@ mod time;
 
 pub fn reg(
     lua: &mlua::Lua,
-    registry: crate::registry::RequestRegistry,
+    registry: crate::lua::RequestRegistry,
     file_contents: String,
 ) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
