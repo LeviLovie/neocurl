@@ -9,7 +9,7 @@ A command line tool to test servers.
 - [x] Tests
 - [x] Logs
 - [x] Json support
-- [ ] Custom library loading
+- [x] Custom library loading
 
 ## Install
 
