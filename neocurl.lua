@@ -88,3 +88,56 @@ define({
         run_async({"test", "test2"}, 500, 25)
     end,
 })
+
+define({
+    name = "base64",
+    func = function()
+        payload = "Hello, World!"
+        encoded = to_base64(payload)
+        decoded = from_base64(encoded)
+
+        print("Payload: " .. payload .. ", encoded: " .. encoded .. ", decoded: " .. decoded)
+
+        assert("base64 encode/decode", payload == decoded)
+    end,
+})
+
+function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
+end
+
+define({
+    name = "json",
+    func = function()
+        json = require("json")
+        local tbl = {
+            animals = { "dog", "cat", "aardvark" },
+            instruments = { "violin", "trombone", "theremin" },
+            bugs = json.null,
+            trees = nil
+        }
+
+        local str = json.encode(tbl, { indent = false } )
+
+        local obj, pos, err = json.decode(str, 1, nil)
+        if err then
+            print("Error:", err)
+        end
+        
+        print(dump(tbl))
+        print("JSON: " .. str)
+        print(dump(obj))
+
+        assert("json encode bugs", str.bugs == obj.bugs)
+        assert("json encode trees", str.trees == obj.trees)
+    end,
+})

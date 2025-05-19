@@ -1,4 +1,5 @@
 mod api;
+pub mod lua_libs;
 pub mod registry;
 mod repl;
 pub mod run_request;
@@ -38,6 +39,7 @@ pub fn run() -> Result<()> {
 
     let lua = Lua::new();
     api::reg(&lua, registry.clone(), file_contents.clone())?;
+    lua_libs::load(&lua)?;
     debug!("Lua initialized successfully");
 
     lua.load(file_contents.as_str()).exec().map_err(|e| {

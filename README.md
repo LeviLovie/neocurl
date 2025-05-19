@@ -2,6 +2,15 @@
 
 A command line tool to test servers.
 
+## Features
+
+- [x] Sending requests
+- [x] Running definintions at runtime
+- [x] Tests
+- [x] Logs
+- [x] Json support
+- [ ] Custom library loading
+
 ## Install
 
 Make sure you have [rust](https://www.rust-lang.org/learn/get-started) installed.
@@ -122,3 +131,30 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 
 - `time`: Returns timestamp in millis since the epoch.
 - `format_time(format_str)`: Returns time formatted using format_str. Ex. `format_time("%Y-%m-%d %H:%M:%S")`
+- `to_base64(payload)`: Encodes `payload` in base64.
+- `from_base64(base64)`: Decodes from base64
+
+### Libs
+
+#### Json
+
+[dkjson](https://dkolf.de/dkjson-lua/) is used to encode/decode json. Example usage:
+
+```lua
+define({
+    name = "json",
+    func = function()
+        json = require("json")
+        local tbl = {
+            animals = { "dog", "cat", "aardvark" },
+            instruments = { "violin", "trombone", "theremin" },
+            bugs = json.null,
+            trees = nil
+        }
+
+        local str = json.encode(tbl, { indent = false })
+
+        print(str)
+    end,
+})
+```

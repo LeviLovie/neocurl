@@ -5,14 +5,16 @@ license = "MIT"
 homepage = "https://github.com/LeviLovie/neocurl"
 repository = "https://github.com/LeviLovie/neocurl"
 documentation = "https://docs.rs/neocurl"
-keywords = ["request", "rest", "api", "test", "request"]
+keywords = ["request", "rest", "api", "test"]
 categories = ["command-line-utilities", "development-tools"]
 exclude = ["/target", "**/*.rs.bk", "**/*.tmp"]
-version = "1.0.2"
+default-run = "ncurl"
+version = "1.1.0"
 edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
+base64 = "0.22.1"
 chrono = "0.4.41"
 clap = { version = "4.5.38", features = ["derive"] }
 futures = "0.3.31"
