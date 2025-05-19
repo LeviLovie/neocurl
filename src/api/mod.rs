@@ -1,4 +1,5 @@
 mod base64;
+mod dump;
 mod log;
 mod request;
 mod run;
@@ -19,6 +20,7 @@ pub fn reg(
     time::reg(lua)?;
     run::reg(lua, registry.clone(), file_contents)?;
     base64::reg(lua)?;
+    dump::reg(lua)?;
 
     Ok(())
 }

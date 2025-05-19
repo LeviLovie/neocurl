@@ -133,6 +133,7 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 - `format_time(format_str)`: Returns time formatted using format_str. Ex. `format_time("%Y-%m-%d %H:%M:%S")`
 - `to_base64(payload)`: Encodes `payload` in base64.
 - `from_base64(base64)`: Decodes from base64
+- `dump(value)`: Dumps `value` to a string and returns it. Useful for debugging tables. Ex. `print(dump(tbl))`
 
 ### Libs
 
