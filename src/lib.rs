@@ -1,9 +1,9 @@
 mod lua;
 mod repl;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
-use tracing::{error, span, warn, Level};
+use tracing::{Level, error, span, warn};
 
 #[derive(Clone, Parser)]
 struct Args {

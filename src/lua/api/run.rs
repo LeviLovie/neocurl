@@ -25,10 +25,12 @@ fn reg_run(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Re
             tracing::info!("Running request: {} ({})", name, amount);
 
             for _ in 0..amount {
-                runtime::run_definition_in_registry(registry.clone(), name.clone()).map_err(|e| {
-                    tracing::error!("Failed to run request: {}", e);
-                    mlua::prelude::LuaError::runtime("Failed to run request")
-                })?;
+                runtime::run_definition_in_registry(registry.clone(), name.clone()).map_err(
+                    |e| {
+                        tracing::error!("Failed to run request: {}", e);
+                        mlua::prelude::LuaError::runtime("Failed to run request")
+                    },
+                )?;
             }
 
             Ok(())
@@ -104,12 +106,21 @@ fn run_lua_tasks_async(
                 let func_name = func_name.clone();
 
                 let result = tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-                    tracing::info!("Running task {}-{}: {}", func_name.clone(), task_id, func_name);
+                    tracing::info!(
+                        "Running task {}-{}: {}",
+                        func_name.clone(),
+                        task_id,
+                        func_name
+                    );
 
-                    let mut lua_runtime = runtime::LuaRuntime::builder().with_script(code).libs().build().map_err(|e| {
-                        tracing::error!("Failed to create Lua runtime: {}", e);
-                        anyhow::anyhow!("Failed to create Lua runtime")
-                    })?;
+                    let mut lua_runtime = runtime::LuaRuntime::builder()
+                        .with_script(code)
+                        .libs()
+                        .build()
+                        .map_err(|e| {
+                            tracing::error!("Failed to create Lua runtime: {}", e);
+                            anyhow::anyhow!("Failed to create Lua runtime")
+                        })?;
                     lua_runtime.run_definition(func_name.clone())?;
 
                     tracing::info!("Task {}-{} done", func_name.clone(), task_id);
@@ -129,10 +140,13 @@ fn run_lua_tasks_async(
             res.map_err(|e| {
                 tracing::error!("Task failed: {}", e);
                 anyhow::anyhow!("Task failed")
-            }).unwrap().map_err(|e| {
+            })
+            .unwrap()
+            .map_err(|e| {
                 tracing::error!("Task failed: {}", e);
                 anyhow::anyhow!("Task failed")
-            }).unwrap();
+            })
+            .unwrap();
         }
     });
 

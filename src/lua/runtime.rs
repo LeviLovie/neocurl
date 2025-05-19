@@ -1,6 +1,6 @@
 use tracing::error;
 
-use super::{api, libs, RequestRegistry};
+use super::{RequestRegistry, api, libs};
 
 pub struct LuaRuntimeBuilder {
     script: Option<String>,

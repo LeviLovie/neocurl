@@ -135,7 +135,11 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 - `from_base64(base64)`: Decodes from base64
 - `dump(value)`: Dumps `value` to a string and returns it. Useful for debugging tables. Ex. `print(dump(tbl))`
 
-### Libs
+#### Import
+
+- `import(path)`: Returns code loaded from a lua file located at `path`. Ex. `yaml = import("yaml_lib.lua")`
+
+### Built-in Libs
 
 #### Json
 
