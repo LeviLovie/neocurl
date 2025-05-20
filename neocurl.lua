@@ -41,6 +41,29 @@ define({
 })
 
 define({
+    name = "time",
+    func = function()
+        print(time())
+        print(format_time("%Y-%m-%d %H:%M:%S"))
+    end,
+})
+
+define({
+    name = "load_download",
+    func = function()
+        print(load("./src/ncurl.rs"))
+        print(download("https://raw.githubusercontent.com/LeviLovie/neocurl/refs/heads/main/src/neocurl.rs"))
+    end,
+})
+
+define({
+    name = "env",
+    func = function()
+        print(env("HOME"))
+    end,
+})
+
+define({
     name = "pass",
     func = function()
         print("Passing...")

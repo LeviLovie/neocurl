@@ -9,7 +9,7 @@ keywords = ["request", "rest", "api", "test"]
 categories = ["command-line-utilities", "development-tools"]
 exclude = ["/target", "**/*.rs.bk", "**/*.tmp"]
 default-run = "ncurl"
-version = "1.1.3"
+version = "1.1.4"
 edition = "2024"
 
 [dependencies]
@@ -17,6 +17,7 @@ anyhow = "1.0.98"
 base64 = "0.22.1"
 chrono = "0.4.41"
 clap = { version = "4.5.38", features = ["derive"] }
+dotenv = "0.15.0"
 futures = "0.3.31"
 linefeed = "0.6.0"
 mlua = { version = "0.10.3", features = ["lua54", "send"] }
