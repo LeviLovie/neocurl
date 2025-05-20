@@ -1,3 +1,6 @@
+![Crates.io](https://img.shields.io/crates/v/neocurl.svg)
+[![License](https://img.shields.io/crates/l/neocurl.svg)](LICENSE)
+
 # NeoCurl
 
 A command line tool to test servers.
