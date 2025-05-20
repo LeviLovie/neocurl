@@ -36,3 +36,19 @@ fn reg_env(lua: &mlua::Lua) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lua::LuaRuntime;
+
+    #[test]
+    fn test_env() {
+        let script = r#"
+            env("HOME")
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+}

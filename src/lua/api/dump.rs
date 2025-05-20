@@ -100,3 +100,25 @@ fn reg_dump(lua: &mlua::Lua) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lua::LuaRuntime;
+
+    #[test]
+    fn test_dump() {
+        let script = r#"
+            local test_table = {
+                key1 = "value1",
+                key2 = 42,
+                key3 = true,
+                key4 = { nested_key = "nested_value" },
+            }
+            dump(test_table)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+}

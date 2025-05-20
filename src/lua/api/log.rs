@@ -141,3 +141,52 @@ fn reg_error(lua: &mlua::Lua) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lua::LuaRuntime;
+
+    #[test]
+    fn debug() {
+        let script = r#"
+            debug("This is a debug message")
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn info() {
+        let script = r#"
+            info("This is an info message")
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn warn() {
+        let script = r#"
+            warn("This is a warning message")
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn error() {
+        let script = r#"
+            error("This is an error message")
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+}

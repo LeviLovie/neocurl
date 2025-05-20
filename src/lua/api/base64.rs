@@ -62,3 +62,27 @@ fn reg_from_base64(lua: &mlua::Lua) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lua::LuaRuntime;
+
+    #[test]
+    fn base64() {
+        let script = r#"
+            local data = "Hello, World!"
+            local encoded = to_base64(data)
+            local decoded = from_base64(encoded)
+            assert("Decoded data does not match original data", data == decoded)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+
+        let runtime = runtime.unwrap();
+        let (passed, failed) = runtime.test_summary();
+        assert_eq!(passed, 1);
+        assert_eq!(failed, 0);
+    }
+}
