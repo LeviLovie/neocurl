@@ -1,4 +1,5 @@
-![Crates.io](https://img.shields.io/crates/v/neocurl.svg)
+[![Crates.io](https://img.shields.io/crates/v/neocurl.svg)](https://crates.io/crates/neocurl)
+[![Docs.rs](https://docs.rs/neocurl/badge.svg)](https://docs.rs/neocurl)
 [![License](https://img.shields.io/crates/l/neocurl.svg)](LICENSE)
 
 # NeoCurl
