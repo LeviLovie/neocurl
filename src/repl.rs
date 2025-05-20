@@ -1,7 +1,10 @@
+//! Module for the REPL (Read-Eval-Print Loop) interface.
+
 use crate::lua::LuaRuntime;
 use anyhow::Result;
 use linefeed::{Interface, ReadResult};
 
+/// Starts a Read-Eval-Print Loop (REPL) for the Lua runtime.
 pub fn repl(runtime: &mut LuaRuntime) -> Result<()> {
     let reader = Interface::new("ncurl")?;
     reader.set_prompt(">> ")?;
