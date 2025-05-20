@@ -60,11 +60,12 @@ impl LuaRuntimeBuilder {
         for (name, script) in self.modules {
             let register = format!(
                 r#"
-package = package or {{}}
-package.preload = package.preload or {{}}
-package.preload["{}"] = function(...)
-    {}
-end"#,
+                    package = package or {{}}
+                    package.preload = package.preload or {{}}
+                    package.preload["{}"] = function(...)
+                        {}
+                    end
+                "#,
                 name, script
             );
             lua.load(register).exec()?;
@@ -132,4 +133,69 @@ pub fn run_definition_in_registry(registry: RequestRegistry, name: String) -> an
     let _: () = request_str.call(())?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_script() {
+        let script = r#"
+            function test()
+                return "Hello, World!"
+            end
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn invalid_script() {
+        let script = r#"
+            function test()
+                return "Hello, World!"
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .add_module("test", "return 1")
+            .build();
+        assert!(runtime.is_err());
+    }
+
+    #[test]
+    fn run_definition_in_registry_success() {
+        let script = r#"
+            define({
+                name = "test",
+                func = function() end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build()
+            .unwrap();
+        let name = "test".to_string();
+        let result = run_definition_in_registry(runtime.registry.clone(), name);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn run_definition_in_registry_missing() {
+        let script = r#"
+            define({
+                name = "test",
+                func = function() end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build()
+            .unwrap();
+        let name = "missing".to_string();
+        let result = run_definition_in_registry(runtime.registry.clone(), name);
+        assert!(result.is_err());
+    }
 }
