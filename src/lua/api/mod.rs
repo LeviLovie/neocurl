@@ -8,6 +8,7 @@ mod run;
 mod test;
 mod time;
 
+/// Register all Lua API functions
 pub fn reg(
     lua: &mlua::Lua,
     registry: crate::lua::RequestRegistry,

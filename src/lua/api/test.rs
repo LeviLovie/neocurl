@@ -136,3 +136,52 @@ fn reg_assert_ne(lua: &mlua::Lua) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lua::LuaRuntime;
+
+    #[test]
+    fn test_assert() {
+        let script = r#"
+            assert("test", true)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_assert_not() {
+        let script = r#"
+            assert_not("test", false)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_assert_eq() {
+        let script = r#"
+            assert_eq("test", 1, 1)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_assert_ne() {
+        let script = r#"
+            assert_ne("test", 1, 2)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+}

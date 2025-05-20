@@ -1,13 +1,15 @@
 use tracing::error;
 
-use super::{RequestRegistry, api, libs};
+use super::{api, libs, RequestRegistry};
 
+/// Builder for LuaRuntime
 pub struct LuaRuntimeBuilder {
     script: Option<String>,
     modules: Vec<(String, String)>,
 }
 
 impl LuaRuntimeBuilder {
+    /// Create a new LuaRuntimeBuilder
     pub fn new() -> Self {
         Self {
             script: None,
@@ -15,26 +17,31 @@ impl LuaRuntimeBuilder {
         }
     }
 
+    /// Set the script to be executed
     pub fn with_script(mut self, script: String) -> Self {
         self.script = Some(script);
         self
     }
 
+    /// Add a module
     #[allow(dead_code)]
     pub fn add_module(mut self, name: &str, script: &str) -> Self {
         self.modules.push((name.to_string(), script.to_string()));
         self
     }
 
+    /// Add a library
     fn add_lib(&mut self, (name, script): (&str, &str)) {
         self.modules.push((name.to_string(), script.to_string()));
     }
 
+    /// Add default libraries
     pub fn libs(mut self) -> Self {
         self.add_lib(libs::LIB_DKJSON);
         self
     }
 
+    /// Build the LuaRuntime
     pub fn build(self) -> anyhow::Result<LuaRuntime> {
         let span = tracing::info_span!("build");
         let _enter = span.enter();
@@ -53,11 +60,12 @@ impl LuaRuntimeBuilder {
         for (name, script) in self.modules {
             let register = format!(
                 r#"
-package = package or {{}}
-package.preload = package.preload or {{}}
-package.preload["{}"] = function(...)
-    {}
-end"#,
+                    package = package or {{}}
+                    package.preload = package.preload or {{}}
+                    package.preload["{}"] = function(...)
+                        {}
+                    end
+                "#,
                 name, script
             );
             lua.load(register).exec()?;
@@ -72,20 +80,24 @@ end"#,
     }
 }
 
+/// Abstraction to execute Lua scripts
 pub struct LuaRuntime {
     _lua: mlua::Lua,
     registry: RequestRegistry,
 }
 
 impl LuaRuntime {
+    /// Create a builder
     pub fn builder() -> LuaRuntimeBuilder {
         LuaRuntimeBuilder::new()
     }
 
+    /// Return a summary of all tests executed
     pub fn test_summary(&self) -> (usize, usize) {
         api::test_summary()
     }
 
+    /// List all definitions in the registry
     pub fn list_refinitions(&self) -> Vec<String> {
         self.registry
             .lock()
@@ -95,6 +107,7 @@ impl LuaRuntime {
             .collect()
     }
 
+    /// Run a definition in the registry by name
     pub fn run_definition(&mut self, name: String) -> anyhow::Result<()> {
         let span = tracing::info_span!("run_definition");
         let _enter = span.enter();
@@ -105,6 +118,7 @@ impl LuaRuntime {
     }
 }
 
+/// Run a definition in the registry by name
 pub fn run_definition_in_registry(registry: RequestRegistry, name: String) -> anyhow::Result<()> {
     let span = tracing::info_span!("run_definition_in_registry");
     let _enter = span.enter();
@@ -119,4 +133,69 @@ pub fn run_definition_in_registry(registry: RequestRegistry, name: String) -> an
     let _: () = request_str.call(())?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_script() {
+        let script = r#"
+            function test()
+                return "Hello, World!"
+            end
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn invalid_script() {
+        let script = r#"
+            function test()
+                return "Hello, World!"
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .add_module("test", "return 1")
+            .build();
+        assert!(runtime.is_err());
+    }
+
+    #[test]
+    fn run_definition_in_registry_success() {
+        let script = r#"
+            define({
+                name = "test",
+                func = function() end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build()
+            .unwrap();
+        let name = "test".to_string();
+        let result = run_definition_in_registry(runtime.registry.clone(), name);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn run_definition_in_registry_missing() {
+        let script = r#"
+            define({
+                name = "test",
+                func = function() end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build()
+            .unwrap();
+        let name = "missing".to_string();
+        let result = run_definition_in_registry(runtime.registry.clone(), name);
+        assert!(result.is_err());
+    }
 }

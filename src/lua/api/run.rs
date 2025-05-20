@@ -139,7 +139,7 @@ fn run_lua_tasks_async(
         for res in results {
             res.map_err(|e| {
                 tracing::error!("Task failed: {}", e);
-                anyhow::anyhow!("Task failed")
+                anyhow::anyhow!("Task failed: {}", e)
             })
             .unwrap()
             .map_err(|e| {
@@ -151,4 +151,104 @@ fn run_lua_tasks_async(
     });
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lua::LuaRuntime;
+
+    #[test]
+    fn test_run_single() {
+        let script = r#"
+            define({
+                name = "run_this",
+                func = function() end,
+            })
+
+            run("run_this")
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_run_multiple() {
+        let script = r#"
+            define({
+                name = "run_this",
+                func = function() end,
+            })
+
+            run("run_this", 3)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_run_async_single() {
+        let script = r#"
+            define({
+                name = "run_this",
+                func = function() end,
+            })
+
+            define({
+                name = "run",
+                func = function()
+                    run_async({ "run_this" })
+                end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_run_async_multiple() {
+        let script = r#"
+            define({
+                name = "run_this",
+                func = function() end,
+            })
+
+            define({
+                name = "run",
+                func = function()
+                    run_async({ "run_this" }, 3)
+                end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
+
+    #[test]
+    fn test_run_async_with_delay() {
+        let script = r#"
+            define({
+                name = "run_this",
+                func = function() end,
+            })
+
+            define({
+                name = "run",
+                func = function()
+                    run_async({ "run_this" }, 3, 100)
+                end,
+            })
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .build();
+        assert!(runtime.is_ok());
+    }
 }

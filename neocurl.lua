@@ -151,3 +151,18 @@ define({
         assert("json encode trees", str.trees == obj.trees)
     end,
 })
+
+define({
+    name = "send",
+    func = function()
+        send({
+            url = "https://httpbin.org/get",
+            method = "GET",
+            headers = {
+                ["User-Agent"] = "Neocurl",
+                ["Accept"] = "application/json"
+            },
+        })
+    end,
+})
+

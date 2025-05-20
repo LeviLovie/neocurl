@@ -1,10 +1,13 @@
-mod lua;
-mod repl;
+/// Lua Runtime
+pub mod lua;
+/// REPL
+pub mod repl;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
-use tracing::{Level, error, span, warn};
+use tracing::{error, span, warn, Level};
 
+/// CLI Arguments using Clap
 #[derive(Clone, Parser)]
 struct Args {
     #[clap(long, short)]
@@ -14,6 +17,7 @@ struct Args {
     command: Commands,
 }
 
+/// Commands for the CLI
 #[derive(Subcommand, Clone)]
 enum Commands {
     Repl,
@@ -21,6 +25,7 @@ enum Commands {
     List,
 }
 
+/// Main function to run the CLI
 pub fn run() -> Result<()> {
     let span = tracing::info_span!("run");
     let _enter = span.enter();
@@ -56,6 +61,7 @@ pub fn run() -> Result<()> {
     Ok(())
 }
 
+/// Reads the file specified in the arguments
 fn read_file(args: Args) -> Result<(String, String)> {
     let span = span!(Level::INFO, "read_file", file = args.file);
     let _enter = span.enter();
