@@ -9,7 +9,7 @@ keywords = ["request", "rest", "api", "test"]
 categories = ["command-line-utilities", "development-tools"]
 exclude = ["/target", "**/*.rs.bk", "**/*.tmp"]
 default-run = "ncurl"
-version = "1.1.5"
+version = "1.1.6"
 edition = "2024"
 
 [dependencies]

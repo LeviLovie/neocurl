@@ -4,12 +4,13 @@ pub fn reg(
     lua: &mlua::Lua,
     registry: crate::lua::RequestRegistry,
     file_contents: String,
+    main_dir: std::path::PathBuf,
 ) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
 
     reg_run(lua, registry.clone())?;
-    reg_run_async(lua, file_contents)?;
+    reg_run_async(lua, file_contents, main_dir.clone())?;
 
     Ok(())
 }
@@ -47,7 +48,7 @@ fn reg_run(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Re
     Ok(())
 }
 
-fn reg_run_async(lua: &mlua::Lua, file_contents: String) -> anyhow::Result<()> {
+fn reg_run_async(lua: &mlua::Lua, file_contents: String, main_dir: std::path::PathBuf) -> anyhow::Result<()> {
     let span = tracing::debug_span!("reg_run_async");
     let _enter = span.enter();
 
@@ -69,7 +70,7 @@ fn reg_run_async(lua: &mlua::Lua, file_contents: String) -> anyhow::Result<()> {
                     std::time::Duration::from_millis(100)
                 };
 
-                run_lua_tasks_async(file_contents.clone(), names, amount, delay).map_err(|e| {
+                run_lua_tasks_async(file_contents.clone(), main_dir.clone(), names, amount, delay).map_err(|e| {
                     tracing::error!("Failed to run request: {}", e);
                     mlua::prelude::LuaError::runtime("Failed to run request")
                 })?;
@@ -91,6 +92,7 @@ fn reg_run_async(lua: &mlua::Lua, file_contents: String) -> anyhow::Result<()> {
 
 fn run_lua_tasks_async(
     code: String,
+    main_dir: std::path::PathBuf,
     func_names: Vec<String>,
     amount: u32,
     delay: std::time::Duration,
@@ -100,9 +102,11 @@ fn run_lua_tasks_async(
     rt.block_on(async {
         let tasks = (0..amount).flat_map(|task_id| {
             let code = code.clone();
+            let main_dir = main_dir.clone();
             let func_names = func_names.clone();
             func_names.into_iter().map(move |func_name| {
                 let code = code.clone();
+                let main_dir = main_dir.clone();
                 let func_name = func_name.clone();
 
                 let result = tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
@@ -115,6 +119,7 @@ fn run_lua_tasks_async(
 
                     let mut lua_runtime = runtime::LuaRuntime::builder()
                         .with_script(code)
+                        .with_main_dir(main_dir)
                         .libs()
                         .build()
                         .map_err(|e| {

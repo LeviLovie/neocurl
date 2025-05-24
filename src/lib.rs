@@ -32,10 +32,19 @@ pub fn run() -> Result<()> {
 
     let args = Args::parse();
 
+    let file = args
+        .file
+        .clone()
+        .unwrap_or_else(|| "neocurl.lua".to_string());
+    let main_dir = std::path::PathBuf::from(file.clone())
+        .parent()
+        .unwrap()
+        .to_path_buf();
     let (_, file_contents) = read_file(args.clone())?;
 
     let mut runtime = lua::LuaRuntime::builder()
         .with_script(file_contents)
+        .with_main_dir(main_dir)
         .libs()
         .build()?;
 

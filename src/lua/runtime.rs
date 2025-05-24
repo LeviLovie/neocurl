@@ -6,6 +6,7 @@ use super::{api, libs, RequestRegistry};
 pub struct LuaRuntimeBuilder {
     script: Option<String>,
     modules: Vec<(String, String)>,
+    main_dir: Option<std::path::PathBuf>,
 }
 
 impl LuaRuntimeBuilder {
@@ -14,7 +15,14 @@ impl LuaRuntimeBuilder {
         Self {
             script: None,
             modules: Vec::new(),
+            main_dir: None,
         }
+    }
+
+    /// Set the main directory
+    pub fn with_main_dir(mut self, main_dir: std::path::PathBuf) -> Self {
+        self.main_dir = Some(main_dir);
+        self
     }
 
     /// Set the script to be executed
@@ -46,6 +54,12 @@ impl LuaRuntimeBuilder {
         let span = tracing::info_span!("build");
         let _enter = span.enter();
 
+        if self.main_dir.is_none() {
+            error!("Main directory is required");
+            return Err(anyhow::anyhow!("Main directory is required"));
+        }
+        let main_dir = self.main_dir.unwrap();
+
         if self.script.is_none() {
             error!("Script is required");
             return Err(anyhow::anyhow!("Script is required"));
@@ -55,7 +69,7 @@ impl LuaRuntimeBuilder {
         let registry: RequestRegistry = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
         let lua = mlua::Lua::new();
-        api::reg(&lua, registry.clone(), script.clone())?;
+        api::reg(&lua, registry.clone(), script.clone(), main_dir)?;
 
         for (name, script) in self.modules {
             let register = format!(
