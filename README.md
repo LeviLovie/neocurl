@@ -14,7 +14,7 @@ A command line tool to test servers.
 - [x] Tests
 - [x] Logs
 - [x] Json support
-- [x] Custom library loading
+- [x] Running tests
 
 ## Install
 
@@ -79,6 +79,8 @@ define({
 
 define({
     name = "run_get_request",
+    -- Do not run as a test
+    test = false,
     func = function()
         -- Run a definition and runtime twice
         run("get_request", 2)
@@ -108,7 +110,7 @@ define({
 
 #### Definitions
 
-- `define(name, func)`: Func is executed when a definition is called by its name.
+- `define({name, test, func})`: Creates a new definition with `name`, `func` is executed when called, and `test` states if it should be run as a test (default is `true`).
 
 #### Runs
 
