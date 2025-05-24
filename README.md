@@ -73,8 +73,7 @@ define({
         print_response(result)
 
         -- Test for result
-        assert("200 status", result.status == 200)
-        assert_not("status >= 400", result.status >= 400)
+        assert(result.status == 200)
     end,
 })
 
@@ -127,10 +126,7 @@ define({
 
 If any test fails in `run` command, the tool will exit with exit code of `1` (Use in CI/CD? :D).
 
-- `assert(message, condition)`: Asserts that `condition` is `true`, logs with `message`.
-- `assert_not(message, condition)`: Asserts that `condition` is `false`, logs with `message`.
-- `assert_eq(message, left, right)`: Asserts that `left` is equal to `right`, logs with `message`.
-- `assert_ne(message, left, right)`: Asserts that `left` is not equal to `right`, logs with `message`.
+- `assert(condition, fail_func)`: Asserts that `condition` is `true`, if not, runs `fail_func`.
 
 #### Helpers
 
@@ -143,6 +139,8 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 #### Import
 
 - `import(path)`: Returns code loaded from a lua file located at `path`. Ex. `yaml = import("yaml_lib.lua")`
+- `load(path)`: Returns content loaded from a file located at `path`. Ex. `payload = import("payload.json")`
+- `download(url)`: Returns file downloaded from url.
 
 ### Built-in Libs
 
@@ -161,10 +159,9 @@ define({
             bugs = json.null,
             trees = nil
         }
-
         local str = json.encode(tbl, { indent = false })
 
-        print(str)
+        info(str)
     end,
 })
 ```
