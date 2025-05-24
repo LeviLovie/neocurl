@@ -1,3 +1,5 @@
+check_version("1.2.*")
+
 define({
 	name = "send",
 	func = function()

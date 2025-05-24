@@ -51,9 +51,12 @@ define({
 
 ## Advaced
 
-Use helpers, tests, runs, and async.
+Use checks, helpers, tests, runs, and async.
 
 ```lua
+-- Check the NeoCurl version
+check_version("1.2.3")
+
 define({
     name = "get_request",
     func = function()
@@ -137,6 +140,10 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 - `to_base64(payload)`: Encodes `payload` in base64.
 - `from_base64(base64)`: Decodes from base64
 - `dump(value)`: Dumps `value` to a string and returns it. Useful for debugging tables. Ex. `print(dump(tbl))`
+
+#### Checks
+
+- `check_version(version)`: Checks if `version` and current NeoCurl version are the same. Version is in [Semantic Versioning](https://semver.org/) (`major.minor.patch`), setting `patch` to `*` will ignore patch check. Ex. `check_version("1.2.*")`.
 
 #### Import
 
