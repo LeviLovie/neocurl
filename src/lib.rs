@@ -23,6 +23,7 @@ enum Commands {
     Repl,
     Run { name: String },
     List,
+    Test,
 }
 
 /// Main function to run the CLI
@@ -50,7 +51,7 @@ pub fn run() -> Result<()> {
 
     match args.command {
         Commands::List => {
-            for (i, name) in runtime.list_refinitions().iter().enumerate() {
+            for (i, (_, name)) in runtime.list_refinitions().iter().enumerate() {
                 println!("{}: {}", i + 1, name);
             }
         }
@@ -64,6 +65,9 @@ pub fn run() -> Result<()> {
         }
         Commands::Repl => {
             repl::repl(&mut runtime)?;
+        }
+        Commands::Test => {
+            runtime.run_tests()?;
         }
     }
 

@@ -19,7 +19,7 @@ pub fn repl(runtime: &mut LuaRuntime) -> Result<()> {
 
                 match parts[0] {
                     "list" => {
-                        for (i, name) in runtime.list_refinitions().iter().enumerate() {
+                        for (i, (_, name)) in runtime.list_refinitions().iter().enumerate() {
                             println!("{}: {}", i + 1, name);
                         }
                     }
@@ -28,6 +28,9 @@ pub fn repl(runtime: &mut LuaRuntime) -> Result<()> {
 
                         runtime.run_definition(name)?;
                         let _ = runtime.test_summary();
+                    }
+                    "test" => {
+                        runtime.run_tests()?;
                     }
                     "exit" | "quit" => {
                         println!("Exiting REPL.");

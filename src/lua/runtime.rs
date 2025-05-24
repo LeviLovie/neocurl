@@ -1,6 +1,7 @@
+use owo_colors::{OwoColorize, XtermColors};
 use tracing::error;
 
-use super::{RequestRegistry, api, libs};
+use super::{api, libs, RequestRegistry};
 
 /// Builder for LuaRuntime
 pub struct LuaRuntimeBuilder {
@@ -126,12 +127,22 @@ impl LuaRuntime {
     }
 
     /// List all definitions in the registry
-    pub fn list_refinitions(&self) -> Vec<String> {
+    pub fn list_refinitions(&self) -> Vec<(bool, String)> {
         self.registry
             .lock()
             .unwrap()
             .iter()
-            .map(|req| req.get::<String>("name").unwrap_or_default())
+            .map(|req| {
+                let is_a_test = match req.get::<mlua::Value>("test").unwrap() {
+                    mlua::Value::Nil => true,
+                    mlua::Value::Boolean(b) => b,
+                    _ => {
+                        error!("Invalid type for 'foo' in request: {:?}", req);
+                        false
+                    }
+                };
+                (is_a_test, req.get::<String>("name").unwrap_or_default())
+            })
             .collect()
     }
 
@@ -141,6 +152,50 @@ impl LuaRuntime {
         let _enter = span.enter();
 
         run_definition_in_registry(self.registry.clone(), name)?;
+
+        Ok(())
+    }
+
+    /// Run all tests in the registry
+    pub fn run_tests(&mut self) -> anyhow::Result<()> {
+        let span = tracing::info_span!("run_tests");
+        let _enter = span.enter();
+
+        let mut global_passed = 0;
+        let mut global_failed = 0;
+        let mut failed_tests = Vec::new();
+
+        for (is_a_test, name) in self.list_refinitions() {
+            if !is_a_test {
+                println!("Skipping non-test definition: {}", name);
+                continue;
+            }
+            println!("Running test: {}", name);
+
+            self.run_definition(name.clone())?;
+            let (passed, failed) = self.test_summary();
+            global_passed += passed;
+            global_failed += failed;
+
+            if failed > 0 {
+                failed_tests.push(name);
+            }
+
+            println!();
+        }
+
+        println!(
+            "{} {}{}{}",
+            "Test overview:".color(XtermColors::DarkGray),
+            global_passed.bright_green().bold(),
+            "|".color(XtermColors::DarkGray),
+            global_failed.bright_red().bold()
+        );
+
+        if global_failed > 0 {
+            println!("Failed tests: {:#?}", failed_tests);
+            std::process::exit(1);
+        }
 
         Ok(())
     }

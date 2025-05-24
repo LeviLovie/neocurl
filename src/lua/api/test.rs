@@ -18,6 +18,9 @@ pub fn test_summary() -> (usize, usize) {
         failed.bright_red().bold()
     );
 
+    PASSED.store(0, Ordering::Relaxed);
+    FAILED.store(0, Ordering::Relaxed);
+
     return (passed as usize, failed as usize);
 }
 
