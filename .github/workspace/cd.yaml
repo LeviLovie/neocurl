@@ -1,0 +1,22 @@
+name: Crates CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    needs: build-test
+    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'publish ')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Login into crates.io
+        run: cargo login ${{ secrets.CRATES_IO }}
+      - name: Build binaries in "release" mode
+        run: cargo build -r
+      - name: "Package for crates.io"
+        run: cargo package # publishes a package as a tarball
+      - name: "Publish to crates.io"
+        run: cargo publish # publishes your crate as a library that can be added as a dependency

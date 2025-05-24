@@ -87,7 +87,7 @@ fn reg_dump(lua: &mlua::Lua) -> anyhow::Result<()> {
         .create_function(|_, obj: mlua::Table| {
             let dump = dump_table(obj);
 
-            return Ok(dump);
+            Ok(dump)
         })
         .map_err(|e| {
             tracing::error!("Failed to create dump function: {}", e);
