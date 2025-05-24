@@ -1,62 +1,43 @@
-use super::super::runtime;
-
+#[tracing::instrument]
 pub fn reg(
     lua: &mlua::Lua,
     registry: crate::lua::RequestRegistry,
     file_contents: String,
     main_dir: std::path::PathBuf,
 ) -> anyhow::Result<()> {
-    let span = tracing::info_span!("reg");
-    let _enter = span.enter();
-
     reg_run(lua, registry.clone())?;
     reg_run_async(lua, file_contents, main_dir.clone())?;
 
     Ok(())
 }
 
+#[tracing::instrument]
 fn reg_run(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Result<()> {
-    let span = tracing::debug_span!("reg_run");
-    let _enter = span.enter();
+    let run_fn = lua.create_function(move |_, (name, amount): (String, Option<u32>)| {
+        let amount = if let Some(amount) = amount { amount } else { 1 };
+        tracing::info!("Running request: {} ({})", name, amount);
 
-    let globals = lua.globals();
-    let run_fn = lua
-        .create_function(move |_, (name, amount): (String, Option<u32>)| {
-            let amount = if let Some(amount) = amount { amount } else { 1 };
-            tracing::info!("Running request: {} ({})", name, amount);
+        for _ in 0..amount {
+            crate::lua::runtime::run_definition_in_registry(registry.clone(), name.clone())
+                .map_err(|e| {
+                    tracing::error!("Failed to run request: {}", e);
+                    mlua::prelude::LuaError::runtime("Failed to run request")
+                })?;
+        }
 
-            for _ in 0..amount {
-                runtime::run_definition_in_registry(registry.clone(), name.clone()).map_err(
-                    |e| {
-                        tracing::error!("Failed to run request: {}", e);
-                        mlua::prelude::LuaError::runtime("Failed to run request")
-                    },
-                )?;
-            }
-
-            Ok(())
-        })
-        .map_err(|e| {
-            tracing::error!("Failed to create run function: {}", e);
-            anyhow::anyhow!("Failed to create run function")
-        })?;
-    globals.set("run", run_fn).map_err(|e| {
-        tracing::error!("Failed to set run function in globals: {}", e);
-        anyhow::anyhow!("Failed to set run function in globals")
+        Ok(())
     })?;
+    lua.globals().set("run", run_fn)?;
 
     Ok(())
 }
 
+#[tracing::instrument]
 fn reg_run_async(
     lua: &mlua::Lua,
     file_contents: String,
     main_dir: std::path::PathBuf,
 ) -> anyhow::Result<()> {
-    let span = tracing::debug_span!("reg_run_async");
-    let _enter = span.enter();
-
-    let globals = lua.globals();
     let run_async_fn = lua
         .create_function(
             move |_, (name, amount, delay): (mlua::Table, Option<u32>, Option<u64>)| {
@@ -88,15 +69,8 @@ fn reg_run_async(
 
                 Ok(())
             },
-        )
-        .map_err(|e| {
-            tracing::error!("Failed to create run function: {}", e);
-            anyhow::anyhow!("Failed to create run function")
-        })?;
-    globals.set("run_async", run_async_fn).map_err(|e| {
-        tracing::error!("Failed to set run function in globals: {}", e);
-        anyhow::anyhow!("Failed to set run function in globals")
-    })?;
+        )?;
+    lua.globals().set("run_async", run_async_fn)?;
 
     Ok(())
 }
@@ -128,7 +102,7 @@ fn run_lua_tasks_async(
                         func_name
                     );
 
-                    let mut lua_runtime = runtime::LuaRuntime::builder()
+                    let mut lua_runtime = crate::lua::runtime::LuaRuntime::builder()
                         .with_script(code)
                         .with_main_dir(main_dir)
                         .with_thread(format!("{}-{}", func_name, task_id))

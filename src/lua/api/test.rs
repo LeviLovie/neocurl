@@ -24,45 +24,32 @@ pub fn test_summary() -> (usize, usize) {
     return (passed as usize, failed as usize);
 }
 
+#[tracing::instrument]
 pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let span = tracing::info_span!("reg");
-    let _enter = span.enter();
-
     reg_assert(lua)?;
 
     Ok(())
 }
 
+#[tracing::instrument]
 fn reg_assert(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let span = tracing::info_span!("reg_test");
-    let _enter = span.enter();
+    let fn_assert = lua.create_function(|_, (cond, msg): (bool, Option<Function>)| {
+        if cond {
+            PASSED.fetch_add(1, Ordering::Relaxed);
+        } else {
+            FAILED.fetch_add(1, Ordering::Relaxed);
 
-    let globals = lua.globals();
-    let fn_assert = lua
-        .create_function(|_, (cond, msg): (bool, Option<Function>)| {
-            if cond {
-                PASSED.fetch_add(1, Ordering::Relaxed);
-            } else {
-                FAILED.fetch_add(1, Ordering::Relaxed);
-
-                if let Some(msg) = msg {
-                    let result: mlua::Result<()> = msg.call(false);
-                    if let Err(e) = result {
-                        tracing::error!("Failed to call message function: {}", e);
-                    }
+            if let Some(msg) = msg {
+                let result: mlua::Result<()> = msg.call(false);
+                if let Err(e) = result {
+                    tracing::error!("Failed to call message function: {}", e);
                 }
             }
+        }
 
-            Ok(())
-        })
-        .map_err(|e| {
-            tracing::error!("Failed to create assert function: {}", e);
-            anyhow::anyhow!("Failed to create assert function")
-        })?;
-    globals.set("assert", fn_assert).map_err(|e| {
-        tracing::error!("Failed to set assert function: {}", e);
-        anyhow::anyhow!("Failed to set assert function")
+        Ok(())
     })?;
+    lua.globals().set("assert", fn_assert)?;
 
     Ok(())
 }

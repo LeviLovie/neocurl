@@ -1,7 +1,7 @@
+#[tracing::instrument]
 pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let span = tracing::info_span!("reg_dump");
-    let _enter = span.enter();
     reg_dump(lua)?;
+
     Ok(())
 }
 
@@ -78,25 +78,14 @@ fn dump_table(table: mlua::Table) -> String {
     result
 }
 
+#[tracing::instrument]
 fn reg_dump(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let span = tracing::info_span!("reg_dump");
-    let _enter = span.enter();
+    let fn_dump = lua.create_function(|_, obj: mlua::Table| {
+        let dump = dump_table(obj);
 
-    let globals = lua.globals();
-    let fn_dump = lua
-        .create_function(|_, obj: mlua::Table| {
-            let dump = dump_table(obj);
-
-            Ok(dump)
-        })
-        .map_err(|e| {
-            tracing::error!("Failed to create dump function: {}", e);
-            anyhow::anyhow!("Failed to create dump function")
-        })?;
-    globals.set("dump", fn_dump).map_err(|e| {
-        tracing::error!("Failed to set dump function: {}", e);
-        anyhow::anyhow!("Failed to set dump function")
+        Ok(dump)
     })?;
+    lua.globals().set("dump", fn_dump)?;
 
     Ok(())
 }
