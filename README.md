@@ -1,6 +1,7 @@
 [![Crates.io](https://img.shields.io/crates/v/neocurl.svg)](https://crates.io/crates/neocurl)
 [![Docs.rs](https://docs.rs/neocurl/badge.svg)](https://docs.rs/neocurl)
 [![License](https://img.shields.io/crates/l/neocurl.svg)](LICENSE)
+[![CI/CD](https://github.com/levilovie/neocurl/actions/workflows/ci.yml/badge.svg)](https://github.com/levilovie/neocurl/actions/workflows/ci.yml/)
 
 # NeoCurl
 
