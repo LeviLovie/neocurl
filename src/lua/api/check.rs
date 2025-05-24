@@ -11,9 +11,9 @@ fn check_version_matches(current_version: String, version: String) -> bool {
     let script_parts: Vec<&str> = version.split('.').collect();
     if script_parts.len() < 2 || script_parts.len() > 3 {
         tracing::error!(
-                "Invalid script version format: {}. Expected format is 'major.minor' or 'major.minor.patch'.",
-                version
-            );
+            "Invalid script version format: {}. Expected format is 'major.minor' or 'major.minor.patch'.",
+            version
+        );
         std::process::exit(1);
     }
 

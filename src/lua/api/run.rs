@@ -38,38 +38,37 @@ fn reg_run_async(
     file_contents: String,
     main_dir: std::path::PathBuf,
 ) -> anyhow::Result<()> {
-    let run_async_fn = lua
-        .create_function(
-            move |_, (name, amount, delay): (mlua::Table, Option<u32>, Option<u64>)| {
-                let amount = if let Some(amount) = amount { amount } else { 1 };
-                let names = name
-                    .pairs()
-                    .filter_map(|pair| {
-                        let (_, value): (String, String) = pair.ok()?;
-                        Some(value)
-                    })
-                    .collect::<Vec<String>>();
-                let delay = if let Some(delay) = delay {
-                    std::time::Duration::from_millis(delay as u64)
-                } else {
-                    std::time::Duration::from_millis(100)
-                };
+    let run_async_fn = lua.create_function(
+        move |_, (name, amount, delay): (mlua::Table, Option<u32>, Option<u64>)| {
+            let amount = if let Some(amount) = amount { amount } else { 1 };
+            let names = name
+                .pairs()
+                .filter_map(|pair| {
+                    let (_, value): (String, String) = pair.ok()?;
+                    Some(value)
+                })
+                .collect::<Vec<String>>();
+            let delay = if let Some(delay) = delay {
+                std::time::Duration::from_millis(delay as u64)
+            } else {
+                std::time::Duration::from_millis(100)
+            };
 
-                run_lua_tasks_async(
-                    file_contents.clone(),
-                    main_dir.clone(),
-                    names,
-                    amount,
-                    delay,
-                )
-                .map_err(|e| {
-                    tracing::error!("Failed to run request: {}", e);
-                    mlua::prelude::LuaError::runtime("Failed to run request")
-                })?;
+            run_lua_tasks_async(
+                file_contents.clone(),
+                main_dir.clone(),
+                names,
+                amount,
+                delay,
+            )
+            .map_err(|e| {
+                tracing::error!("Failed to run request: {}", e);
+                mlua::prelude::LuaError::runtime("Failed to run request")
+            })?;
 
-                Ok(())
-            },
-        )?;
+            Ok(())
+        },
+    )?;
     lua.globals().set("run_async", run_async_fn)?;
 
     Ok(())
