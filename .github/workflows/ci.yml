@@ -1,5 +1,4 @@
-name: Rust CI
-
+name: CI/CD
 on:
   push:
     branches: [main]
