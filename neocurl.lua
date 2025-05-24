@@ -1,3 +1,5 @@
+check_version("1.2.*")
+
 define({
 	name = "send",
 	func = function()
@@ -67,6 +69,7 @@ define({
 
 define({
 	name = "fail",
+    test = false,
 	func = function()
 		assert(false, function()
 			error("This is a failure test")
@@ -104,6 +107,7 @@ define({
 
 define({
 	name = "stress_async",
+    test = false,
 	func = function()
 		run_async({ "send", "send_status" }, 500, 40)
 	end,

@@ -1,4 +1,5 @@
 mod base64;
+mod check;
 mod dump;
 mod env;
 mod load;
@@ -30,6 +31,7 @@ pub fn reg(
     dump::reg(lua)?;
     env::reg(lua)?;
     load::reg(lua, main_dir.clone())?;
+    check::reg(lua)?;
 
     Ok(())
 }
