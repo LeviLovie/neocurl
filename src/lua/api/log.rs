@@ -1,16 +1,18 @@
-pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
+use owo_colors::{OwoColorize, XtermColors};
+
+pub fn reg(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
 
-    reg_debug(lua)?;
-    reg_info(lua)?;
-    reg_warn(lua)?;
-    reg_error(lua)?;
+    reg_debug(lua, thread_name.clone())?;
+    reg_info(lua, thread_name.clone())?;
+    reg_warn(lua, thread_name.clone())?;
+    reg_error(lua, thread_name.clone())?;
 
     Ok(())
 }
 
-fn reg_debug(lua: &mlua::Lua) -> anyhow::Result<()> {
+fn reg_debug(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg_debug");
     let _enter = span.enter();
 
@@ -28,7 +30,16 @@ fn reg_debug(lua: &mlua::Lua) -> anyhow::Result<()> {
                 Some(dt) => dt,
             };
             let formatted_time = dt.format("%Y-%m-%dT%H:%M:%S").to_string();
-            println!("{} <LUA>    DEBUG: {}", formatted_time, msg.trim());
+
+            println!(
+                "{} {} {}{} {}",
+                formatted_time.color(XtermColors::DarkGray),
+                "DEBUG".bright_cyan().bold(),
+                thread_name.clone().color(XtermColors::DarkGray),
+                ":".color(XtermColors::DarkGray),
+                msg.trim()
+            );
+
             Ok(())
         })
         .map_err(|e| {
@@ -43,7 +54,7 @@ fn reg_debug(lua: &mlua::Lua) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn reg_info(lua: &mlua::Lua) -> anyhow::Result<()> {
+fn reg_info(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg_info");
     let _enter = span.enter();
 
@@ -61,7 +72,16 @@ fn reg_info(lua: &mlua::Lua) -> anyhow::Result<()> {
                 Some(dt) => dt,
             };
             let formatted_time = dt.format("%Y-%m-%dT%H:%M:%S").to_string();
-            println!("{} <LUA>    INFO: {}", formatted_time, msg.trim());
+
+            println!(
+                "{} {} {}{} {}",
+                formatted_time.color(XtermColors::DarkGray),
+                " INFO".bright_green().bold(),
+                thread_name.clone().color(XtermColors::DarkGray),
+                ":".color(XtermColors::DarkGray),
+                msg.trim()
+            );
+
             Ok(())
         })
         .map_err(|e| {
@@ -76,7 +96,7 @@ fn reg_info(lua: &mlua::Lua) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn reg_warn(lua: &mlua::Lua) -> anyhow::Result<()> {
+fn reg_warn(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg_warn");
     let _enter = span.enter();
 
@@ -94,7 +114,16 @@ fn reg_warn(lua: &mlua::Lua) -> anyhow::Result<()> {
                 Some(dt) => dt,
             };
             let formatted_time = dt.format("%Y-%m-%dT%H:%M:%S").to_string();
-            println!("{} <LUA>    WARN: {}", formatted_time, msg.trim());
+
+            println!(
+                "{} {} {}{} {}",
+                formatted_time.color(XtermColors::DarkGray),
+                " WARN".bright_yellow().bold(),
+                thread_name.clone().color(XtermColors::DarkGray),
+                ":".color(XtermColors::DarkGray),
+                msg.trim()
+            );
+
             Ok(())
         })
         .map_err(|e| {
@@ -109,7 +138,7 @@ fn reg_warn(lua: &mlua::Lua) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn reg_error(lua: &mlua::Lua) -> anyhow::Result<()> {
+fn reg_error(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg_error");
     let _enter = span.enter();
 
@@ -127,7 +156,16 @@ fn reg_error(lua: &mlua::Lua) -> anyhow::Result<()> {
                 Some(dt) => dt,
             };
             let formatted_time = dt.format("%Y-%m-%dT%H:%M:%S").to_string();
-            println!("{} <LUA>    ERROR: {}", formatted_time, msg.trim());
+
+            println!(
+                "{} {} {}{} {}",
+                formatted_time.color(XtermColors::DarkGray),
+                "ERROR".bright_red().bold(),
+                thread_name.clone().color(XtermColors::DarkGray),
+                ":".color(XtermColors::DarkGray),
+                msg.trim()
+            );
+
             Ok(())
         })
         .map_err(|e| {
@@ -153,7 +191,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -164,7 +204,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -175,7 +217,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -186,7 +230,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 }

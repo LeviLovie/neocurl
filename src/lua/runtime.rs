@@ -7,6 +7,7 @@ pub struct LuaRuntimeBuilder {
     script: Option<String>,
     modules: Vec<(String, String)>,
     main_dir: Option<std::path::PathBuf>,
+    thread_name: String,
 }
 
 impl LuaRuntimeBuilder {
@@ -16,6 +17,7 @@ impl LuaRuntimeBuilder {
             script: None,
             modules: Vec::new(),
             main_dir: None,
+            thread_name: "main".to_string(),
         }
     }
 
@@ -28,6 +30,12 @@ impl LuaRuntimeBuilder {
     /// Set the script to be executed
     pub fn with_script(mut self, script: String) -> Self {
         self.script = Some(script);
+        self
+    }
+
+    /// Set the thread name
+    pub fn with_thread(mut self, thread_name: String) -> Self {
+        self.thread_name = thread_name;
         self
     }
 
@@ -69,7 +77,13 @@ impl LuaRuntimeBuilder {
         let registry: RequestRegistry = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
         let lua = mlua::Lua::new();
-        api::reg(&lua, registry.clone(), script.clone(), main_dir)?;
+        api::reg(
+            &lua,
+            registry.clone(),
+            script.clone(),
+            main_dir,
+            self.thread_name.clone(),
+        )?;
 
         for (name, script) in self.modules {
             let register = format!(
@@ -162,7 +176,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -174,8 +190,10 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .add_module("test", "return 1")
             .build();
+
         assert!(runtime.is_err());
     }
 
@@ -189,10 +207,12 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build()
             .unwrap();
         let name = "test".to_string();
         let result = run_definition_in_registry(runtime.registry.clone(), name);
+
         assert!(result.is_ok());
     }
 
@@ -206,10 +226,12 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build()
             .unwrap();
         let name = "missing".to_string();
         let result = run_definition_in_registry(runtime.registry.clone(), name);
+
         assert!(result.is_err());
     }
 }

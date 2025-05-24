@@ -48,7 +48,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 }

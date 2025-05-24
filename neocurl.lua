@@ -1,168 +1,185 @@
 define({
-    name = "test",
-    func = function()
-        result = send({
-            url = "https://httpbin.org/get",
-            method = "GET",
-            headers = {
-                ["User-Agent"] = "Neocurl",
-                ["Accept"] = "application/json"
-            },
-        })
+	name = "send",
+	func = function()
+		result = send({
+			url = "https://httpbin.org/get",
+			method = "GET",
+			headers = {
+				["User-Agent"] = "Neocurl",
+				["Accept"] = "application/json",
+			},
+		})
 
-        print_response(result)
+		info("Response received")
+		print_response(result)
 
-        assert("200 status", result.status == 200)
-        assert_not("status >= 400", result.status >= 400)
-        assert_eq("status == 200", result.status, 200)
-        assert_ne("status != 404", result.status, 404)
-
-        -- assert("200 status", result.status ~= 200)
-        -- assert_not("status < 400", result.status < 400)
-        -- assert_eq("status == 400", result.status, 400)
-        -- assert_ne("status", result.status, 200)
-    end,
+		assert(result.status == 200, function()
+			error("Expected status 200, got " .. result.status)
+		end)
+	end,
 })
 
 define({
-    name = "test2",
-    func = function()
-        result = send({
-            url = "https://httpbin.org/post",
-            method = "POST",
-            headers = {
-                ["User-Agent"] = "Neocurl",
-                ["Accept"] = "application/json"
-            },
-        })
+	name = "send_status",
+	func = function()
+		result = send({
+			url = "https://httpbin.org/post",
+			method = "POST",
+			headers = {
+				["User-Agent"] = "Neocurl",
+				["Accept"] = "application/json",
+			},
+		})
 
-        print("Status: " .. result.status)
-    end,
+		info("Status: " .. result.status)
+	end,
 })
 
 define({
-    name = "time",
-    func = function()
-        print(time())
-        print(format_time("%Y-%m-%d %H:%M:%S"))
-    end,
+	name = "time",
+	func = function()
+		info(time())
+		info(format_time("%Y-%m-%d %H:%M:%S"))
+	end,
 })
 
 define({
-    name = "load_download",
-    func = function()
-        print(load("./src/ncurl.rs"))
-        print(download("https://raw.githubusercontent.com/LeviLovie/neocurl/refs/heads/main/src/neocurl.rs"))
-    end,
+	name = "load_download",
+	func = function()
+		info(load("./src/ncurl.rs"))
+		info(download("https://raw.githubusercontent.com/LeviLovie/neocurl/refs/heads/main/src/neocurl.rs"))
+	end,
 })
 
 define({
-    name = "env",
-    func = function()
-        print(env("HOME"))
-    end,
+	name = "env",
+	func = function()
+		info(env("HOME"))
+	end,
 })
 
 define({
-    name = "pass",
-    func = function()
-        print("Passing...")
-    end,
+	name = "pass",
+	func = function()
+		info("Passing...")
+	end,
 })
 
 define({
-    name = "fail",
-    func = function()
-        assert("Failing", false)
-    end,
+	name = "fail",
+	func = function()
+		assert(false, function()
+			error("This is a failure test")
+		end)
+	end,
 })
 
 define({
-    name = "test_run",
-    func = function()
-        run("test2")
-    end,
+	name = "run",
+	func = function()
+		run("send")
+	end,
 })
 
 define({
-    name = "test_many",
-    func = function()
-        run("test2", 5)
-    end,
+	name = "many",
+	func = function()
+		run("send_status", 5)
+	end,
 })
 
 define({
-    name = "test_many_async",
-    func = function()
-        run_async({"test2"}, 5)
-    end,
+	name = "many_async",
+	func = function()
+		run_async({ "send_status" }, 5)
+	end,
 })
 
 define({
-    name = "test_async",
-    func = function()
-        run_async({"test2", "pass"}, 25)
-    end,
+	name = "async",
+	func = function()
+		run_async({ "send", "send_status" }, 25)
+	end,
 })
 
 define({
-    name = "stress_async",
-    func = function()
-        run_async({"test", "test2"}, 500, 25)
-    end,
+	name = "stress_async",
+	func = function()
+		run_async({ "send", "send_status" }, 500, 40)
+	end,
 })
 
 define({
-    name = "base64",
-    func = function()
-        payload = "Hello, World!"
-        encoded = to_base64(payload)
-        decoded = from_base64(encoded)
+	name = "base64",
+	func = function()
+		payload = "Hello, World!"
+		encoded = to_base64(payload)
+		decoded = from_base64(encoded)
 
-        print("Payload: " .. payload .. ", encoded: " .. encoded .. ", decoded: " .. decoded)
+		info("Payload: " .. payload .. ", encoded: " .. encoded .. ", decoded: " .. decoded)
 
-        assert("base64 encode/decode", payload == decoded)
-    end,
+		assert(payload == decoded, function()
+			error("Base64 decode failed: expected '" .. payload .. "', got '" .. decoded .. "'")
+		end)
+	end,
 })
 
 define({
-    name = "json",
-    func = function()
-        json = require("json")
-        local tbl = {
-            animals = { "dog", "cat", "aardvark" },
-            instruments = { "violin", "trombone", "theremin" },
-            bugs = json.null,
-            trees = nil
-        }
+	name = "json",
+	func = function()
+		json = require("json")
+		local tbl = {
+			animals = { "dog", "cat", "aardvark" },
+			instruments = { "violin", "trombone", "theremin" },
+			bugs = json.null,
+			trees = nil,
+		}
 
-        local str = json.encode(tbl, { indent = false } )
+		local str = json.encode(tbl, { indent = false })
 
-        local obj, pos, err = json.decode(str, 1, nil)
-        if err then
-            print("Error:", err)
-        end
-        
-        print(dump(tbl))
-        print("JSON: " .. str)
-        print(dump(obj))
+		local obj, pos, err = json.decode(str, 1, nil)
+		if err then
+			error("Error:", err)
+		end
 
-        assert("json encode bugs", str.bugs == obj.bugs)
-        assert("json encode trees", str.trees == obj.trees)
-    end,
+		info(dump(tbl))
+		info("JSON: " .. str)
+		info(dump(obj))
+
+		assert(obj.animals[1] == "dog", function()
+			error("Expected 'dog', got '" .. obj.animals[1] .. "'")
+		end)
+		assert(obj.instruments[2] == "trombone")
+	end,
 })
 
 define({
-    name = "send",
-    func = function()
-        send({
-            url = "https://httpbin.org/get",
-            method = "GET",
-            headers = {
-                ["User-Agent"] = "Neocurl",
-                ["Accept"] = "application/json"
-            },
-        })
-    end,
+	name = "send",
+	func = function()
+		send({
+			url = "https://httpbin.org/get",
+			method = "GET",
+			headers = {
+				["User-Agent"] = "Neocurl",
+				["Accept"] = "application/json",
+			},
+		})
+	end,
 })
 
+define({
+	name = "logs",
+	func = function()
+		debug("Debug message")
+		info("Info message")
+		warn("Warning message")
+		error("Error message")
+	end,
+})
+
+define({
+	name = "async_logs",
+	func = function()
+		run_async({ "logs" }, 10)
+	end,
+})

@@ -73,10 +73,13 @@ mod tests {
             local data = "Hello, World!"
             local encoded = to_base64(data)
             local decoded = from_base64(encoded)
-            assert("Decoded data does not match original data", data == decoded)
+            assert(data == decoded, function()
+                error("Base64 encoding/decoding failed")
+            end)
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
         assert!(runtime.is_ok());
 

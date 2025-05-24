@@ -16,11 +16,12 @@ pub fn reg(
     registry: crate::lua::RequestRegistry,
     file_contents: String,
     main_dir: std::path::PathBuf,
+    thread_name: String,
 ) -> anyhow::Result<()> {
     let span = tracing::info_span!("reg");
     let _enter = span.enter();
 
-    log::reg(lua)?;
+    log::reg(lua, thread_name.clone())?;
     request::reg(lua, registry.clone())?;
     test::reg(lua)?;
     time::reg(lua)?;

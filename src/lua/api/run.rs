@@ -120,6 +120,7 @@ fn run_lua_tasks_async(
                     let mut lua_runtime = runtime::LuaRuntime::builder()
                         .with_script(code)
                         .with_main_dir(main_dir)
+                        .with_thread(format!("{}-{}", func_name, task_id))
                         .libs()
                         .build()
                         .map_err(|e| {
@@ -174,7 +175,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -190,7 +193,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -211,7 +216,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -232,7 +239,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 
@@ -253,7 +262,9 @@ mod tests {
         "#;
         let runtime = LuaRuntime::builder()
             .with_script(script.to_string())
+            .with_main_dir(".".into())
             .build();
+
         assert!(runtime.is_ok());
     }
 }
