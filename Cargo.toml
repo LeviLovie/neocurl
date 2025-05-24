@@ -8,7 +8,7 @@ documentation = "https://docs.rs/neocurl"
 keywords = ["request", "rest", "api", "test"]
 categories = ["command-line-utilities", "development-tools"]
 default-run = "ncurl"
-version = "1.2.4"
+version = "1.2.5"
 edition = "2024"
 
 [dependencies]

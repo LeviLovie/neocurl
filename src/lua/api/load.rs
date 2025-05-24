@@ -70,7 +70,6 @@ fn reg_download(lua: &mlua::Lua) -> anyhow::Result<()> {
 #[tracing::instrument]
 fn reg_import(lua: &mlua::Lua, main_dir: std::path::PathBuf) -> anyhow::Result<()> {
     let fn_import = lua.create_function(move |lua, path: String| {
-        println!("Importing: {}", path);
         let abs_path = main_dir.join(&path);
         tracing::info!("Importing file: {}", abs_path.display());
         let code = match std::fs::read_to_string(&abs_path) {
