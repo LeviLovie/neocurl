@@ -48,7 +48,11 @@ fn reg_run(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Re
     Ok(())
 }
 
-fn reg_run_async(lua: &mlua::Lua, file_contents: String, main_dir: std::path::PathBuf) -> anyhow::Result<()> {
+fn reg_run_async(
+    lua: &mlua::Lua,
+    file_contents: String,
+    main_dir: std::path::PathBuf,
+) -> anyhow::Result<()> {
     let span = tracing::debug_span!("reg_run_async");
     let _enter = span.enter();
 
@@ -70,7 +74,14 @@ fn reg_run_async(lua: &mlua::Lua, file_contents: String, main_dir: std::path::Pa
                     std::time::Duration::from_millis(100)
                 };
 
-                run_lua_tasks_async(file_contents.clone(), main_dir.clone(), names, amount, delay).map_err(|e| {
+                run_lua_tasks_async(
+                    file_contents.clone(),
+                    main_dir.clone(),
+                    names,
+                    amount,
+                    delay,
+                )
+                .map_err(|e| {
                     tracing::error!("Failed to run request: {}", e);
                     mlua::prelude::LuaError::runtime("Failed to run request")
                 })?;
