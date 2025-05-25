@@ -177,127 +177,122 @@ struct ResponseStruct {
 
 #[tracing::instrument]
 fn reg_send_async(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let send_async_fn = lua.create_function(
-        |lua, (args, amount): (mlua::Table, u32)| {
-            let req = Request::from_table(args).map_err(|e| {
-                tracing::error!("Failed to parse request from args: {}", e);
-                mlua::prelude::LuaError::runtime(format!(
-                    "Failed to parse request from args: {}",
-                    e
-                ))
-            })?;
+    let send_async_fn = lua.create_function(|lua, (args, amount): (mlua::Table, u32)| {
+        let req = Request::from_table(args).map_err(|e| {
+            tracing::error!("Failed to parse request from args: {}", e);
+            mlua::prelude::LuaError::runtime(format!("Failed to parse request from args: {}", e))
+        })?;
 
-            tracing::info!("Sending async request...");
+        tracing::info!("Sending async request...");
 
-            type FuturesType = Vec<
-                std::pin::Pin<
-                    Box<dyn Future<Output = Result<ResponseStruct, LuaError>> + std::marker::Send>,
+        type FuturesType = Vec<
+            std::pin::Pin<
+                Box<dyn Future<Output = Result<ResponseStruct, LuaError>> + std::marker::Send>,
+            >,
+        >;
+
+        let mut futures: FuturesType = Vec::<
+            std::pin::Pin<
+                Box<
+                    dyn futures::Future<Output = Result<ResponseStruct, LuaError>>
+                        + std::marker::Send,
                 >,
-            >;
+            >,
+        >::new();
+        for i in 0..amount {
+            let req = req.clone();
+            let start = std::time::Instant::now();
+            let mut request_builder = reqwest::Client::new()
+                .request(req.method, &req.url)
+                .headers(req.headers.clone());
 
-            let mut futures: FuturesType = Vec::<
-                std::pin::Pin<
-                    Box<
-                        dyn futures::Future<Output = Result<ResponseStruct, LuaError>>
-                            + std::marker::Send,
-                    >,
-                >,
-            >::new();
-            for i in 0..amount {
-                let req = req.clone();
-                let start = std::time::Instant::now();
-                let mut request_builder = reqwest::Client::new()
-                    .request(req.method, &req.url)
-                    .headers(req.headers.clone());
-
-                for (key, value) in req.query {
-                    request_builder = request_builder.query(&[(key, value)]);
+            for (key, value) in req.query {
+                request_builder = request_builder.query(&[(key, value)]);
+            }
+            if let Some(body) = req.body {
+                if req.body_as_bytes {
+                    request_builder = request_builder.body(body.into_bytes());
+                } else {
+                    request_builder = request_builder.body(body);
                 }
-                if let Some(body) = req.body {
-                    if req.body_as_bytes {
-                        request_builder = request_builder.body(body.into_bytes());
-                    } else {
-                        request_builder = request_builder.body(body);
-                    }
-                }
-
-                let future = async move {
-                    let response = request_builder.send().await.map_err(|e| {
-                        tracing::error!("Failed to send request: {}", e);
-                        mlua::prelude::LuaError::runtime("Failed to send request")
-                    })?;
-
-                    let status = response.status();
-                    let status_code = status.as_u16();
-                    let status_text = status.canonical_reason().unwrap_or("Unknown").to_string();
-                    let headers = response.headers().clone();
-                    let text = response.text().await.map_err(|e| {
-                        tracing::error!("Failed to read response body: {}", e);
-                        mlua::prelude::LuaError::runtime("Failed to read response body")
-                    })?;
-                    let elapsed = start.elapsed();
-
-                    let headers_vec: Vec<(String, String)> = headers
-                        .iter()
-                        .filter_map(|(key, value)| {
-                            value
-                                .to_str()
-                                .ok()
-                                .map(|v| (key.as_str().to_string(), v.to_string()))
-                        })
-                        .collect();
-
-                    let response = ResponseStruct {
-                        index: i,
-                        elapsed: elapsed.as_millis(),
-                        status: status_code,
-                        status_text,
-                        headers: headers_vec,
-                        body: text,
-                    };
-
-                    Ok(response)
-                };
-
-                futures.push(future.boxed());
             }
 
-            let rt = tokio::runtime::Runtime::new().map_err(|e| {
-                tracing::error!("Failed to create tokio runtime: {}", e);
-                mlua::prelude::LuaError::runtime("Failed to create tokio runtime")
-            })?;
-
-            let mut awaited_futures = Vec::new();
-
-            rt.block_on(async {
-                awaited_futures = futures::future::join_all(futures).await;
-            });
-
-            let result = lua.create_table()?;
-            for future in awaited_futures {
-                let response = future.map_err(|e| {
-                    tracing::error!("Failed to process response: {}", e);
-                    mlua::prelude::LuaError::runtime("Failed to process response")
+            let future = async move {
+                let response = request_builder.send().await.map_err(|e| {
+                    tracing::error!("Failed to send request: {}", e);
+                    mlua::prelude::LuaError::runtime("Failed to send request")
                 })?;
 
-                let response_table = lua.create_table()?;
-                response_table.set("elapsed", response.elapsed)?;
-                response_table.set("status", response.status)?;
-                response_table.set("status_text", response.status_text)?;
-                response_table.set("body", response.body)?;
+                let status = response.status();
+                let status_code = status.as_u16();
+                let status_text = status.canonical_reason().unwrap_or("Unknown").to_string();
+                let headers = response.headers().clone();
+                let text = response.text().await.map_err(|e| {
+                    tracing::error!("Failed to read response body: {}", e);
+                    mlua::prelude::LuaError::runtime("Failed to read response body")
+                })?;
+                let elapsed = start.elapsed();
 
-                let headers_table = lua.create_table()?;
-                for (key, value) in response.headers {
-                    headers_table.set(key, value)?;
-                }
-                response_table.set("headers", headers_table)?;
+                let headers_vec: Vec<(String, String)> = headers
+                    .iter()
+                    .filter_map(|(key, value)| {
+                        value
+                            .to_str()
+                            .ok()
+                            .map(|v| (key.as_str().to_string(), v.to_string()))
+                    })
+                    .collect();
 
-                result.set(response.index + 1, response_table)?;
+                let response = ResponseStruct {
+                    index: i,
+                    elapsed: elapsed.as_millis(),
+                    status: status_code,
+                    status_text,
+                    headers: headers_vec,
+                    body: text,
+                };
+
+                Ok(response)
+            };
+
+            futures.push(future.boxed());
+        }
+
+        let rt = tokio::runtime::Runtime::new().map_err(|e| {
+            tracing::error!("Failed to create tokio runtime: {}", e);
+            mlua::prelude::LuaError::runtime("Failed to create tokio runtime")
+        })?;
+
+        let mut awaited_futures = Vec::new();
+
+        rt.block_on(async {
+            awaited_futures = futures::future::join_all(futures).await;
+        });
+
+        let result = lua.create_table()?;
+        for future in awaited_futures {
+            let response = future.map_err(|e| {
+                tracing::error!("Failed to process response: {}", e);
+                mlua::prelude::LuaError::runtime("Failed to process response")
+            })?;
+
+            let response_table = lua.create_table()?;
+            response_table.set("elapsed", response.elapsed)?;
+            response_table.set("status", response.status)?;
+            response_table.set("status_text", response.status_text)?;
+            response_table.set("body", response.body)?;
+
+            let headers_table = lua.create_table()?;
+            for (key, value) in response.headers {
+                headers_table.set(key, value)?;
             }
+            response_table.set("headers", headers_table)?;
 
-            Ok(result)
-        },
-    )?;
+            result.set(response.index + 1, response_table)?;
+        }
+
+        Ok(result)
+    })?;
     lua.globals().set("send_async", send_async_fn)?;
 
     Ok(())
