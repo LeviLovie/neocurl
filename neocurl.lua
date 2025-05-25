@@ -54,6 +54,21 @@ define({
 })
 
 define({
+	name = "send_async_stress",
+	test = false,
+	func = function()
+		send_async({
+			url = "https://httpbin.org/post",
+			method = "POST",
+			headers = {
+				["User-Agent"] = "Neocurl",
+				["Accept"] = "application/json",
+			},
+		}, 5000, 200)
+	end,
+})
+
+define({
 	name = "time",
 	func = function()
 		info(time())
@@ -103,7 +118,7 @@ define({
 define({
 	name = "many",
 	func = function()
-		run("send_status", 5)
+		run("send_status", 5, false)
 	end,
 })
 
@@ -117,7 +132,7 @@ define({
 define({
 	name = "async",
 	func = function()
-		run_async({ "send", "send_status" }, 25)
+		run_async({ "send", "send_status" }, 25, false)
 	end,
 })
 
@@ -125,7 +140,7 @@ define({
 	name = "stress_async",
 	test = false,
 	func = function()
-		run_async({ "send", "send_status" }, 500, 40)
+		run_async({ "send", "send_status" }, 500, true, 40)
 	end,
 })
 
