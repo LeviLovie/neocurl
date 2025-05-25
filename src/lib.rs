@@ -9,6 +9,7 @@ use tracing::{Level, error, span, warn};
 
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
+#[clap(version)]
 struct Args {
     #[clap(long, short)]
     file: Option<String>,
@@ -98,5 +99,5 @@ fn read_file(args: Args) -> Result<(String, String)> {
         anyhow!("Failed to read file")
     })?;
 
-    return Ok((file, file_contents));
+    Ok((file, file_contents))
 }

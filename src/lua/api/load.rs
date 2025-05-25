@@ -1,6 +1,5 @@
 #[tracing::instrument]
 pub fn reg(lua: &mlua::Lua, main_dir: std::path::PathBuf) -> anyhow::Result<()> {
-    reg_import(lua, main_dir.clone())?;
     reg_load(lua, main_dir.clone())?;
     reg_download(lua)?;
 
@@ -63,29 +62,6 @@ fn reg_download(lua: &mlua::Lua) -> anyhow::Result<()> {
         }
     })?;
     lua.globals().set("download", fn_download)?;
-
-    Ok(())
-}
-
-#[tracing::instrument]
-fn reg_import(lua: &mlua::Lua, main_dir: std::path::PathBuf) -> anyhow::Result<()> {
-    let fn_import = lua.create_function(move |lua, path: String| {
-        let abs_path = main_dir.join(&path);
-        tracing::info!("Importing file: {}", abs_path.display());
-        let code = match std::fs::read_to_string(&abs_path) {
-            Ok(code) => code,
-            Err(e) => {
-                tracing::error!("Failed to read file: {}", e);
-                return Err(mlua::Error::RuntimeError("File not found".to_string()));
-            }
-        };
-
-        let chunk = lua.load(&code).set_name(&path);
-        chunk.eval::<mlua::Value>()?;
-
-        Ok(())
-    })?;
-    lua.globals().set("import", fn_import)?;
 
     Ok(())
 }
