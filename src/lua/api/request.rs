@@ -191,19 +191,20 @@ fn reg_send_async(lua: &mlua::Lua) -> anyhow::Result<()> {
                 ))
             })?;
 
-        tracing::info!("Sending async request...");
+            tracing::info!("Sending async request...");
 
-        type FuturesType = Vec<
-            std::pin::Pin<
-                Box<dyn Future<Output = Result<ResponseStruct, LuaError>> + std::marker::Send>,
-            >,
-        >;
+            type FuturesType = Vec<
+                std::pin::Pin<
+                    Box<dyn Future<Output = Result<ResponseStruct, LuaError>> + std::marker::Send>,
+                >,
+            >;
 
-        let mut futures: FuturesType = Vec::<
-            std::pin::Pin<
-                Box<
-                    dyn futures::Future<Output = Result<ResponseStruct, LuaError>>
-                        + std::marker::Send,
+            let mut futures: FuturesType = Vec::<
+                std::pin::Pin<
+                    Box<
+                        dyn futures::Future<Output = Result<ResponseStruct, LuaError>>
+                            + std::marker::Send,
+                    >,
                 >,
             >::new();
 
@@ -285,50 +286,48 @@ fn reg_send_async(lua: &mlua::Lua) -> anyhow::Result<()> {
                     *active.lock().unwrap() -= 1;
 
                     Ok(response)
-            
                 };
 
-                Ok(response)
-            };
+                futures.push(future.boxed());
+            }
 
-            futures.push(future.boxed());
-        }
-
-        let rt = tokio::runtime::Runtime::new().map_err(|e| {
-            tracing::error!("Failed to create tokio runtime: {}", e);
-            mlua::prelude::LuaError::runtime("Failed to create tokio runtime")
-        })?;
-      
-        let mut awaited_futures = Vec::new();
-
-        rt.block_on(async {
-            awaited_futures = futures::future::join_all(futures).await;
-        });
-
-        let result = lua.create_table()?;
-        for future in awaited_futures {
-            let response = future.map_err(|e| {
-                tracing::error!("Failed to process response: {}", e);
-                mlua::prelude::LuaError::runtime("Failed to process response")
+            let rt = tokio::runtime::Runtime::new().map_err(|e| {
+                tracing::error!("Failed to create tokio runtime: {}", e);
+                mlua::prelude::LuaError::runtime("Failed to create tokio runtime")
             })?;
 
-            let response_table = lua.create_table()?;
-            response_table.set("elapsed", response.elapsed)?;
-            response_table.set("status", response.status)?;
-            response_table.set("status_text", response.status_text)?;
-            response_table.set("body", response.body)?;
+            let mut awaited_futures = Vec::new();
 
-            let headers_table = lua.create_table()?;
-            for (key, value) in response.headers {
-                headers_table.set(key, value)?;
+            rt.block_on(async {
+                awaited_futures = futures::future::join_all(futures).await;
+            });
+            pb_finished.finish();
+
+            let result = lua.create_table()?;
+            for future in awaited_futures {
+                let response = future.map_err(|e| {
+                    tracing::error!("Failed to process response: {}", e);
+                    mlua::prelude::LuaError::runtime("Failed to process response")
+                })?;
+
+                let response_table = lua.create_table()?;
+                response_table.set("elapsed", response.elapsed)?;
+                response_table.set("status", response.status)?;
+                response_table.set("status_text", response.status_text)?;
+                response_table.set("body", response.body)?;
+
+                let headers_table = lua.create_table()?;
+                for (key, value) in response.headers {
+                    headers_table.set(key, value)?;
+                }
+                response_table.set("headers", headers_table)?;
+
+                result.set(response.index + 1, response_table)?;
             }
-            response_table.set("headers", headers_table)?;
 
-            result.set(response.index + 1, response_table)?;
-        }
-
-        Ok(result)
-    })?;
+            Ok(result)
+        },
+    )?;
     lua.globals().set("send_async", send_async_fn)?;
 
     Ok(())
