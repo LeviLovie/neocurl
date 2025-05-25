@@ -57,6 +57,9 @@ Use checks, helpers, tests, runs, and async.
 -- Check the NeoCurl version
 check_version("1.2.3")
 
+-- Read BASE_URL from envs
+BASE_URL = env("BASE_URL") or "http://localhost:8080"
+
 define({
     name = "get_request",
     func = function()
@@ -64,7 +67,7 @@ define({
         now = format_time("%Y-%m-%d %H:%M:%S")
 
         result = send({
-            url = "https://httpbin.org/get",
+            url = BASE_URL,
             method = "GET",
             headers = {
                 ["User-Agent"] = "Neocurl",
