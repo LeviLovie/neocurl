@@ -10,6 +10,7 @@ pub fn reg(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Re
     reg_send(lua)?;
     reg_send_async(lua)?;
     reg_print_response(lua)?;
+    reg_print_request(lua)?;
 
     Ok(())
 }
@@ -33,15 +34,20 @@ struct Request {
     pub method: reqwest::Method,
     pub headers: reqwest::header::HeaderMap,
     pub query: Vec<(String, String)>,
-    pub body: Option<String>,
-    pub body_as_bytes: bool,
+    pub body: Option<Vec<u8>>,
 }
 
 impl Request {
     pub fn from_table(table: mlua::Table) -> anyhow::Result<Self> {
         let url: String = table.get("url")?;
-        let body: Option<String> = table.get("body").ok();
-        let body_as_bytes: bool = table.get("body_as_bytes").unwrap_or(false);
+        let body: Option<Vec<u8>> = match table.get("body").ok().unwrap_or(None) {
+            Some(mlua::Value::Nil) => None,
+            Some(mlua::Value::String(s)) => Some(s.as_bytes().to_vec()),
+            _ => {
+                tracing::error!("Body is not a string or nil");
+                return Err(anyhow::anyhow!("Body is not a string or nil"));
+            }
+        };
 
         let method: reqwest::Method = match table.get::<String>("method") {
             Ok(method_str) => match method_str.as_str() {
@@ -102,7 +108,6 @@ impl Request {
             headers,
             query,
             body,
-            body_as_bytes,
         })
     }
 }
@@ -127,11 +132,7 @@ fn reg_send(lua: &mlua::Lua) -> anyhow::Result<()> {
             request_builder = request_builder.query(&[(key, value)]);
         }
         if let Some(body) = req.body {
-            request_builder = if req.body_as_bytes {
-                request_builder.body(body.into_bytes())
-            } else {
-                request_builder.body(body)
-            };
+            request_builder = request_builder.body(body);
         }
 
         let response = request_builder.send().map_err(|e| {
@@ -241,11 +242,7 @@ fn reg_send_async(lua: &mlua::Lua) -> anyhow::Result<()> {
                         request_builder = request_builder.query(&[(key, value)]);
                     }
                     if let Some(body) = req.body {
-                        if req.body_as_bytes {
-                            request_builder = request_builder.body(body.into_bytes());
-                        } else {
-                            request_builder = request_builder.body(body);
-                        }
+                        request_builder = request_builder.body(body);
                     }
 
                     let response = request_builder.send().await.map_err(|e| {
@@ -363,6 +360,46 @@ fn reg_print_response(lua: &mlua::Lua) -> anyhow::Result<()> {
         Ok(())
     })?;
     lua.globals().set("print_response", print_response_fn)?;
+
+    Ok(())
+}
+
+#[tracing::instrument]
+fn reg_print_request(lua: &mlua::Lua) -> anyhow::Result<()> {
+    let print_request_fn = lua.create_function(|_, request: mlua::Table| {
+        let req = Request::from_table(request).map_err(|e| {
+            tracing::error!("Failed to parse request from table: {}", e);
+            mlua::prelude::LuaError::runtime(format!("Failed to parse request from table: {}", e))
+        })?;
+
+        println!("Request:");
+        println!("  URL: {}", req.url);
+        println!("  Method: {}", req.method);
+        if req.headers.is_empty() {
+            println!("  Headers: None");
+        } else {
+            println!("  Headers:");
+            for (key, value) in req.headers.iter() {
+                println!("    {}: {}", key, value.to_str().unwrap_or("Invalid header value"));
+            }
+        }
+        if req.query.is_empty() {
+            println!("  Query: None");
+        } else {
+            println!("  Query:");
+            for (key, value) in req.query {
+            println!("    {}: {}", key, value);
+            }
+        }
+        if let Some(body) = req.body {
+            println!("  Body: {}", String::from_utf8_lossy(&body));
+        } else {
+            println!("  Body: None");
+        }
+
+        Ok(())
+    })?;
+    lua.globals().set("print_request", print_request_fn)?;
 
     Ok(())
 }
