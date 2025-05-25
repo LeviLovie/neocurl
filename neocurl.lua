@@ -1,4 +1,4 @@
-check_version("1.2.*")
+check_version("1.3.*")
 
 define({
 	name = "send",
