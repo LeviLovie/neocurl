@@ -5,7 +5,7 @@ pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn value_to_string(value: mlua::Value) -> String {
+fn value_to_string(value: mlua::Value, recursive: bool) -> String {
     match value {
         mlua::Value::Nil => "nil".to_string(),
         mlua::Value::Boolean(b) => b.to_string(),
@@ -27,7 +27,7 @@ fn value_to_string(value: mlua::Value) -> String {
 
                 if let mlua::Value::Integer(i) = k {
                     if i > 0 {
-                        items.push(value_to_string(v));
+                        items.push(value_to_string(v, recursive));
                         continue;
                     }
                 }
@@ -39,7 +39,11 @@ fn value_to_string(value: mlua::Value) -> String {
             if is_array {
                 format!("[{}]", items.join(", "))
             } else {
-                "<table>".to_string()
+                if !recursive {
+                    return "<table>".to_string();
+                }
+
+                dump_table(t, recursive)
             }
         }
         mlua::Value::Function(_) => "<function>".to_string(),
@@ -51,7 +55,7 @@ fn value_to_string(value: mlua::Value) -> String {
     }
 }
 
-fn dump_table(table: mlua::Table) -> String {
+fn dump_table(table: mlua::Table, recursive: bool) -> String {
     let mut result = String::new();
 
     for pair in table.pairs::<mlua::Value, mlua::Value>() {
@@ -70,7 +74,7 @@ fn dump_table(table: mlua::Table) -> String {
             mlua::Value::Number(n) => n.to_string(),
             _ => "<unknown key>".to_string(),
         };
-        let value_str = value_to_string(value);
+        let value_str = value_to_string(value, recursive);
 
         result.push_str(&format!("{}: {}\n", key_str, value_str));
     }
@@ -80,8 +84,10 @@ fn dump_table(table: mlua::Table) -> String {
 
 #[tracing::instrument]
 fn reg_dump(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let fn_dump = lua.create_function(|_, obj: mlua::Table| {
-        let dump = dump_table(obj);
+    let fn_dump = lua.create_function(|_, (obj, recursive): (mlua::Table, Option<bool>)| {
+        let recursive = recursive.unwrap_or(false);
+
+        let dump = dump_table(obj, recursive);
 
         Ok(dump)
     })?;

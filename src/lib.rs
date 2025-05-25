@@ -3,12 +3,13 @@ pub mod lua;
 /// REPL
 pub mod repl;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
-use tracing::{error, span, warn, Level};
+use tracing::{Level, error, span, warn};
 
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
+#[clap(version)]
 struct Args {
     #[clap(long, short)]
     file: Option<String>,
