@@ -140,6 +140,9 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 - `to_base64(payload)`: Encodes `payload` in base64.
 - `from_base64(base64)`: Decodes from base64
 - `dump(value)`: Dumps `value` to a string and returns it. Useful for debugging tables. Ex. `print(dump(tbl))`
+- `env(var)`: Reads and returns env `var`. Returns `nil` if `var` does not exist.
+
+TOKEN = env("TOKEN")
 
 #### Checks
 
@@ -147,7 +150,6 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 
 #### Import
 
-- `import(path)`: Returns code loaded from a lua file located at `path`. Ex. `yaml = import("yaml_lib.lua")`
 - `load(path)`: Returns content loaded from a file located at `path`. Ex. `payload = import("payload.json")`
 - `download(url)`: Returns file downloaded from url.
 
