@@ -6,6 +6,24 @@ on:
     branches: [main, dev]
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Format
+        run: cargo fmt -- --check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Install Clippy
+        run: rustup component add clippy
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -18,6 +36,7 @@ jobs:
 
   test-cli:
     runs-on: ubuntu-latest
+    needs: [test, lint, format]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,17 +46,9 @@ jobs:
       - name: Run CLI on test file
         run: ./target/release/ncurl test
 
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Format
-        run: cargo fmt -- --check
-
   publish:
     runs-on: ubuntu-latest
-    needs: [test, test-cli]
+    needs: [test-cli]
     if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'publish ')
     steps:
       - uses: actions/checkout@v4
