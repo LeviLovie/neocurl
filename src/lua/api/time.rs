@@ -27,9 +27,9 @@ fn reg_format_time(lua: &mlua::Lua) -> anyhow::Result<()> {
         let dt = match chrono::DateTime::from_timestamp_millis(timestamp) {
             None => {
                 tracing::error!("Failed to convert timestamp to NaiveDateTime");
-                return Err(mlua::prelude::LuaError::RuntimeError(format!(
-                    "Failed to convert timestamp to NaiveDateTime",
-                )));
+                return Err(mlua::prelude::LuaError::RuntimeError(
+                    "Failed to convert timestamp to NaiveDateTime".to_string(),
+                ));
             }
             Some(dt) => dt,
         };
