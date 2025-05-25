@@ -1,7 +1,7 @@
 use owo_colors::{OwoColorize, XtermColors};
 use tracing::error;
 
-use super::{RequestRegistry, api, libs};
+use super::{api, libs, RequestRegistry};
 
 /// Builder for LuaRuntime
 pub struct LuaRuntimeBuilder {
@@ -11,17 +11,18 @@ pub struct LuaRuntimeBuilder {
     thread_name: String,
 }
 
-impl LuaRuntimeBuilder {
-    /// Create a new LuaRuntimeBuilder
-    pub fn new() -> Self {
-        Self {
+impl Default for LuaRuntimeBuilder {
+    fn default() -> Self {
+        LuaRuntimeBuilder {
             script: None,
             modules: Vec::new(),
             main_dir: None,
             thread_name: "main".to_string(),
         }
     }
+}
 
+impl LuaRuntimeBuilder {
     /// Set the main directory
     pub fn with_main_dir(mut self, main_dir: std::path::PathBuf) -> Self {
         self.main_dir = Some(main_dir);
@@ -118,7 +119,7 @@ pub struct LuaRuntime {
 impl LuaRuntime {
     /// Create a builder
     pub fn builder() -> LuaRuntimeBuilder {
-        LuaRuntimeBuilder::new()
+        LuaRuntimeBuilder::default()
     }
 
     /// Return a summary of all tests executed

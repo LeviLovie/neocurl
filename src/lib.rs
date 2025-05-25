@@ -3,9 +3,9 @@ pub mod lua;
 /// REPL
 pub mod repl;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
-use tracing::{Level, error, span, warn};
+use tracing::{error, span, warn, Level};
 
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
@@ -98,5 +98,5 @@ fn read_file(args: Args) -> Result<(String, String)> {
         anyhow!("Failed to read file")
     })?;
 
-    return Ok((file, file_contents));
+    Ok((file, file_contents))
 }

@@ -14,7 +14,7 @@ pub fn reg(
 #[tracing::instrument]
 fn reg_run(lua: &mlua::Lua, registry: crate::lua::RequestRegistry) -> anyhow::Result<()> {
     let run_fn = lua.create_function(move |_, (name, amount): (String, Option<u32>)| {
-        let amount = if let Some(amount) = amount { amount } else { 1 };
+        let amount = amount.unwrap_or(1);
         tracing::info!("Running request: {} ({})", name, amount);
 
         for _ in 0..amount {
@@ -40,7 +40,7 @@ fn reg_run_async(
 ) -> anyhow::Result<()> {
     let run_async_fn = lua.create_function(
         move |_, (name, amount, delay): (mlua::Table, Option<u32>, Option<u64>)| {
-            let amount = if let Some(amount) = amount { amount } else { 1 };
+            let amount = amount.unwrap_or(1);
             let names = name
                 .pairs()
                 .filter_map(|pair| {
@@ -49,7 +49,7 @@ fn reg_run_async(
                 })
                 .collect::<Vec<String>>();
             let delay = if let Some(delay) = delay {
-                std::time::Duration::from_millis(delay as u64)
+                std::time::Duration::from_millis(delay)
             } else {
                 std::time::Duration::from_millis(100)
             };
