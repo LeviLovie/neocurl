@@ -21,7 +21,7 @@ pub fn test_summary() -> (usize, usize) {
     PASSED.store(0, Ordering::Relaxed);
     FAILED.store(0, Ordering::Relaxed);
 
-    (passed, failed)
+    return (passed as usize, failed as usize);
 }
 
 #[tracing::instrument]

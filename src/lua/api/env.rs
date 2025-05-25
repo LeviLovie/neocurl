@@ -7,14 +7,16 @@ pub fn reg(lua: &mlua::Lua) -> anyhow::Result<()> {
 
 #[tracing::instrument]
 fn reg_env(lua: &mlua::Lua) -> anyhow::Result<()> {
-    let fn_env = lua.create_function(|lua, key: String| {
+    let fn_env = lua.create_function(|_, key: String| {
         dotenv::dotenv().ok();
         match dotenv::var(&key) {
-            Ok(value) => {
-                let string = lua.create_string(&value)?;
-                Ok(mlua::Value::String(string))
+            Ok(value) => Ok(value),
+            Err(e) => {
+                tracing::error!("Failed to get env variable {}: {}", key, e);
+                Err(mlua::prelude::LuaError::runtime(
+                    "Failed to get env variable",
+                ))
             }
-            Err(_) => Ok(mlua::Value::Nil),
         }
     })?;
     lua.globals().set("env", fn_env)?;
