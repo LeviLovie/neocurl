@@ -120,6 +120,11 @@ define({
 - `run(name, Option<amount>)`: Run a definition by name. Optional amount specifies the amount of subsequent calls, default is 1.
 - `run_async(names, Option<amount>, Option<delay>)`: Run a definitions specified in the names table (Ex. `{"run1", "run2"}`). Optional `amount` specifies the amount of subsequent calls, default is 1. Optional `delay` specifies delay between async calls in milliseconds, default is 100ms (if set too low, unexpected behaivor might occur as the amount of threads is not limited).
 
+### Requests
+
+- `send({url, method, headers, query, body})`: Sends a request to `url`.
+- `send_async({url, method, headers, query, body}, amount)`: Sends `amount` of requests in parallel.
+
 #### Log
 
 - `debug(message)`: Log `message` with debug level.
