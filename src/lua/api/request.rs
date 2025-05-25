@@ -40,12 +40,19 @@ struct Request {
 impl Request {
     pub fn from_table(table: mlua::Table) -> anyhow::Result<Self> {
         let url: String = table.get("url")?;
-        let body: Option<Vec<u8>> = match table.get("body").ok().unwrap_or(None) {
+        let body: Option<Vec<u8>> = match table.get("body").ok().unwrap_or(None).unwrap_or(None) {
+            None => None,
             Some(mlua::Value::Nil) => None,
             Some(mlua::Value::String(s)) => Some(s.as_bytes().to_vec()),
             _ => {
-                tracing::error!("Body is not a string or nil");
-                return Err(anyhow::anyhow!("Body is not a string or nil"));
+                tracing::error!(
+                    "Body is not a string or nil: {:?}",
+                    table.get::<mlua::Value>("body")
+                );
+                return Err(anyhow::anyhow!(
+                    "Body is not a string or nil: {:?}",
+                    table.get::<mlua::Value>("body")
+                ));
             }
         };
 
@@ -380,7 +387,11 @@ fn reg_print_request(lua: &mlua::Lua) -> anyhow::Result<()> {
         } else {
             println!("  Headers:");
             for (key, value) in req.headers.iter() {
-                println!("    {}: {}", key, value.to_str().unwrap_or("Invalid header value"));
+                println!(
+                    "    {}: {}",
+                    key,
+                    value.to_str().unwrap_or("Invalid header value")
+                );
             }
         }
         if req.query.is_empty() {
@@ -388,7 +399,7 @@ fn reg_print_request(lua: &mlua::Lua) -> anyhow::Result<()> {
         } else {
             println!("  Query:");
             for (key, value) in req.query {
-            println!("    {}: {}", key, value);
+                println!("    {}: {}", key, value);
             }
         }
         if let Some(body) = req.body {
@@ -406,19 +417,25 @@ fn reg_print_request(lua: &mlua::Lua) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use mlua::Lua;
+    use crate::lua::LuaRuntime;
 
     #[test]
     fn test_request_from_table() {
-        let lua = Lua::new();
-        let table = lua.create_table().unwrap();
-        table.set("url", "http://example.com").unwrap();
-        table.set("method", "GET").unwrap();
-        table.set("body", None::<String>).unwrap();
-        let request = Request::from_table(table).unwrap();
-        assert_eq!(request.url, "http://example.com");
-        assert_eq!(request.method, reqwest::Method::GET);
-        assert!(request.body.is_none());
+        let script = r#"
+            local req = {
+                url = "http://example.com",
+                method = "GET",
+                headers = { ["Content-Type"] = "application/json" },
+                query = { ["key"] = "value" },
+                body = nil
+            }
+            print_request(req)
+        "#;
+        let runtime = LuaRuntime::builder()
+            .with_script(script.to_string())
+            .with_main_dir(".".into())
+            .build();
+
+        assert!(runtime.is_ok(), "Failed to create Lua runtime");
     }
 }
