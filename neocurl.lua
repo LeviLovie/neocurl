@@ -38,37 +38,6 @@ define({
 })
 
 define({
-	name = "send_async",
-	func = function()
-		result = send_async({
-			url = "https://httpbin.org/post",
-			method = "POST",
-			headers = {
-				["User-Agent"] = "Neocurl",
-				["Accept"] = "application/json",
-			},
-		}, 25)
-
-		print(dump(result))
-	end,
-})
-
-define({
-	name = "send_async_stress",
-	test = false,
-	func = function()
-		send_async({
-			url = "https://httpbin.org/post",
-			method = "POST",
-			headers = {
-				["User-Agent"] = "Neocurl",
-				["Accept"] = "application/json",
-			},
-		}, 5000, 200)
-	end,
-})
-
-define({
 	name = "time",
 	func = function()
 		info(time())
@@ -100,7 +69,7 @@ define({
 
 define({
 	name = "fail",
-	test = false,
+    test = false,
 	func = function()
 		assert(false, function()
 			error("This is a failure test")
@@ -118,7 +87,7 @@ define({
 define({
 	name = "many",
 	func = function()
-		run("send_status", 5, false)
+		run("send_status", 5)
 	end,
 })
 
@@ -132,15 +101,15 @@ define({
 define({
 	name = "async",
 	func = function()
-		run_async({ "send", "send_status" }, 25, false)
+		run_async({ "send", "send_status" }, 25)
 	end,
 })
 
 define({
 	name = "stress_async",
-	test = false,
+    test = false,
 	func = function()
-		run_async({ "send", "send_status" }, 500, true, 40)
+		run_async({ "send", "send_status" }, 500, 40)
 	end,
 })
 

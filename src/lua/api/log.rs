@@ -17,9 +17,9 @@ fn reg_debug(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
         let dt = match chrono::DateTime::from_timestamp_millis(timestamp) {
             None => {
                 tracing::error!("Failed to convert timestamp to NaiveDateTime");
-                return Err(mlua::prelude::LuaError::RuntimeError(
-                    "Failed to convert timestamp to NaiveDateTime".to_string(),
-                ));
+                return Err(mlua::prelude::LuaError::RuntimeError(format!(
+                    "Failed to convert timestamp to NaiveDateTime",
+                )));
             }
             Some(dt) => dt,
         };
@@ -48,9 +48,9 @@ fn reg_info(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
         let dt = match chrono::DateTime::from_timestamp_millis(timestamp) {
             None => {
                 tracing::error!("Failed to convert timestamp to NaiveDateTime");
-                return Err(mlua::prelude::LuaError::RuntimeError(
-                    "Failed to convert timestamp to NaiveDateTime".to_string(),
-                ));
+                return Err(mlua::prelude::LuaError::RuntimeError(format!(
+                    "Failed to convert timestamp to NaiveDateTime",
+                )));
             }
             Some(dt) => dt,
         };
@@ -79,9 +79,9 @@ fn reg_warn(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
         let dt = match chrono::DateTime::from_timestamp_millis(timestamp) {
             None => {
                 tracing::error!("Failed to convert timestamp to NaiveDateTime");
-                return Err(mlua::prelude::LuaError::RuntimeError(
-                    "Failed to convert timestamp to NaiveDateTime".to_string(),
-                ));
+                return Err(mlua::prelude::LuaError::RuntimeError(format!(
+                    "Failed to convert timestamp to NaiveDateTime",
+                )));
             }
             Some(dt) => dt,
         };
@@ -110,9 +110,9 @@ fn reg_error(lua: &mlua::Lua, thread_name: String) -> anyhow::Result<()> {
         let dt = match chrono::DateTime::from_timestamp_millis(timestamp) {
             None => {
                 tracing::error!("Failed to convert timestamp to NaiveDateTime");
-                return Err(mlua::prelude::LuaError::RuntimeError(
-                    "Failed to convert timestamp to NaiveDateTime".to_string(),
-                ));
+                return Err(mlua::prelude::LuaError::RuntimeError(format!(
+                    "Failed to convert timestamp to NaiveDateTime",
+                )));
             }
             Some(dt) => dt,
         };
