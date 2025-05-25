@@ -38,6 +38,22 @@ define({
 })
 
 define({
+	name = "send_async",
+	func = function()
+		result = send_async({
+			url = "https://httpbin.org/post",
+			method = "POST",
+			headers = {
+				["User-Agent"] = "Neocurl",
+				["Accept"] = "application/json",
+			},
+		}, 25)
+
+		print(dump(result))
+	end,
+})
+
+define({
 	name = "time",
 	func = function()
 		info(time())
