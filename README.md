@@ -57,6 +57,9 @@ Use checks, helpers, tests, runs, and async.
 -- Check the NeoCurl version
 check_version("1.2.3")
 
+-- Read BASE_URL from envs
+BASE_URL = env("BASE_URL") or "http://localhost:8080"
+
 define({
     name = "get_request",
     func = function()
@@ -64,7 +67,7 @@ define({
         now = format_time("%Y-%m-%d %H:%M:%S")
 
         result = send({
-            url = "https://httpbin.org/get",
+            url = BASE_URL,
             method = "GET",
             headers = {
                 ["User-Agent"] = "Neocurl",
@@ -117,8 +120,13 @@ define({
 
 #### Runs
 
-- `run(name, Option<amount>)`: Run a definition by name. Optional amount specifies the amount of subsequent calls, default is 1.
-- `run_async(names, Option<amount>, Option<delay>)`: Run a definitions specified in the names table (Ex. `{"run1", "run2"}`). Optional `amount` specifies the amount of subsequent calls, default is 1. Optional `delay` specifies delay between async calls in milliseconds, default is 100ms (if set too low, unexpected behaivor might occur as the amount of threads is not limited).
+- `run(name, Option<amount>, Option<progress>)`: Run a definition by `name`. Optional `amount` specifies the amount of subsequent calls, default is 1. And optional `progress` specifies whether to draw a progress bar.
+- `run_async(names, Option<amount>, Option<progress>, Option<delay>)`: Run a definitions specified in the names table (Ex. `{"run1", "run2"}`). Optional `amount` specifies the amount of subsequent calls, default is 1. Optional `delay` specifies delay between async calls in milliseconds, default is 100ms (if set too low, unexpected behaivor might occur as the amount of threads is not limited). And optional `progress` specifies whether to draw a progress bar.
+
+### Requests
+
+- `send({url, method, headers, query, body})`: Sends a request to `url`.
+- `send_async({url, method, headers, query, body}, amount)`: Sends `amount` of requests in parallel.
 
 #### Log
 
@@ -140,6 +148,9 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 - `to_base64(payload)`: Encodes `payload` in base64.
 - `from_base64(base64)`: Decodes from base64
 - `dump(value)`: Dumps `value` to a string and returns it. Useful for debugging tables. Ex. `print(dump(tbl))`
+- `env(var)`: Reads and returns env `var`. Returns `nil` if `var` does not exist.
+
+TOKEN = env("TOKEN")
 
 #### Checks
 
@@ -147,7 +158,6 @@ If any test fails in `run` command, the tool will exit with exit code of `1` (Us
 
 #### Import
 
-- `import(path)`: Returns code loaded from a lua file located at `path`. Ex. `yaml = import("yaml_lib.lua")`
 - `load(path)`: Returns content loaded from a file located at `path`. Ex. `payload = import("payload.json")`
 - `download(url)`: Returns file downloaded from url.
 

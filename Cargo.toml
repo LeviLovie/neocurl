@@ -8,7 +8,7 @@ documentation = "https://docs.rs/neocurl"
 keywords = ["request", "rest", "api", "test"]
 categories = ["command-line-utilities", "development-tools"]
 default-run = "ncurl"
-version = "1.2.5"
+version = "1.3.0"
 edition = "2024"
 
 [dependencies]
@@ -18,6 +18,7 @@ chrono = "0.4.41"
 clap = { version = "4.5.38", features = ["derive"] }
 dotenv = "0.15.0"
 futures = "0.3.31"
+indicatif = "0.17.11"
 linefeed = "0.6.0"
 mlua = { version = "0.10.3", features = ["lua54", "vendored", "send"] }
 once_cell = "1.21.3"
