@@ -7,9 +7,13 @@ def main():
         print("This version of neocurl is not compatible with this script:", nc.version())
         sys.exit(1)
 
+@nc.define
 def request():
-    print("This is a request function from neocurl")
-nc.define("request", request)
+    print("Executing request")
 
-nc.define("request2", lambda: print("This is a second request function from neocurl"))
+def log():
+    print("FOO")
 
+@nc.define
+def log_request():
+    log()

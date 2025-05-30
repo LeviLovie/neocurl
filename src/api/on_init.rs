@@ -5,15 +5,15 @@ use pyo3::{
 };
 
 #[pyclass(name = "on_init")]
-pub struct PyCounter {}
+pub struct PyOnInit {}
 
 #[pymethods]
-impl PyCounter {
+impl PyOnInit {
     #[new]
     fn __new__(wraps: Py<PyAny>) -> Self {
         ON_INIT.lock().unwrap().replace(wraps);
 
-        PyCounter {}
+        PyOnInit {}
     }
 
     #[pyo3(signature = (*args, **kwargs))]
@@ -34,7 +34,7 @@ impl PyCounter {
 }
 
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_class::<PyCounter>()?;
+    module.add_class::<PyOnInit>()?;
 
     Ok(())
 }

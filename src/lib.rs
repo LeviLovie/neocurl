@@ -47,8 +47,8 @@ pub fn run() -> Result<()> {
     match args.command {
         Commands::List => {
             println!("Available definitions:");
-            for (i, def) in api::REGISTRY.lock().unwrap().iter().enumerate() {
-                println!("{}: {}", i, def.name);
+            for (i, def) in vm.list_definitions().iter().enumerate() {
+                println!("{}: {}", i, def);
             }
         }
         Commands::Run { name } => {

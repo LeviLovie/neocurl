@@ -82,14 +82,32 @@ impl Vm {
     pub fn run_definition(&self, name: String) -> Result<()> {
         Python::with_gil(|py| {
             for def in crate::api::REGISTRY.lock().unwrap().iter() {
-                if def.name == name {
-                    let func = def.func.as_ref();
-                    func.call0(py)
-                        .context(format!("Failed to call definition: {}", name))?;
+                let def_ref = def.as_ref();
+                let def_name = def_ref.getattr(py, "__name__")?.extract::<String>(py)?;
+                if def_name == name {
+                    let _ = def_ref.call0(py);
                     return Ok(());
                 }
             }
+
             Ok(())
+        })
+    }
+
+    pub fn list_definitions(&self) -> Vec<String> {
+        Python::with_gil(|py| {
+            crate::api::REGISTRY
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|def| {
+                    def.as_ref()
+                        .getattr(py, "__name__")
+                        .unwrap()
+                        .extract::<String>(py)
+                        .unwrap()
+                })
+                .collect()
         })
     }
 }

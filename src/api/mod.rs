@@ -6,13 +6,7 @@ use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use std::sync::Mutex;
 
-pub struct Definition {
-    pub name: String,
-    pub func: Py<PyAny>,
-}
-
-pub static REGISTRY: Lazy<Mutex<Vec<Definition>>> = Lazy::new(|| Mutex::new(Vec::new()));
-
+pub static REGISTRY: Lazy<Mutex<Vec<Py<PyAny>>>> = Lazy::new(|| Mutex::new(Vec::new()));
 pub static ON_INIT: Lazy<Mutex<Option<Py<PyAny>>>> = Lazy::new(|| Mutex::new(None));
 
 #[pymodule(name = "neocurl")]

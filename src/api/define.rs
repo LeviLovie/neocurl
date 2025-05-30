@@ -1,19 +1,22 @@
-use super::{Definition, REGISTRY};
-use pyo3::{prelude::*, wrap_pyfunction};
+use super::REGISTRY;
+use pyo3::prelude::*;
 
-#[pyfunction]
-fn define(name: String, func: PyObject) -> PyResult<()> {
-    let mut registry = REGISTRY.lock().unwrap();
-    registry.push(Definition {
-        name,
-        func: func.into(),
-    });
+#[pyclass(name = "define")]
+pub struct PyDefine {}
 
-    Ok(())
+#[pymethods]
+impl PyDefine {
+    #[new]
+    fn __new__(wraps: Py<PyAny>) -> Self {
+        let mut registry = REGISTRY.lock().unwrap();
+        registry.push(wraps);
+
+        PyDefine {}
+    }
 }
 
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
-    module.add_function(wrap_pyfunction!(define, module)?)?;
+    module.add_class::<PyDefine>()?;
 
     Ok(())
 }
