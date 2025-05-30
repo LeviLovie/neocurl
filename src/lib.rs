@@ -44,27 +44,23 @@ pub fn run() -> Result<()> {
 
     vm.run().context("Failed to run VM")?;
 
-    // match args.command {
-    //     Commands::List => {
-    //         for (i, (_, name)) in runtime.list_refinitions().iter().enumerate() {
-    //             println!("{}: {}", i + 1, name);
-    //         }
-    //     }
-    //     Commands::Run { name } => {
-    //         runtime.run_definition(name)?;
-    //
-    //         let (_, failed) = runtime.test_summary();
-    //         if failed > 0 {
-    //             std::process::exit(1);
-    //         }
-    //     }
-    //     Commands::Repl => {
-    //         repl::repl(&mut runtime)?;
-    //     }
-    //     Commands::Test => {
-    //         runtime.run_tests()?;
-    //     }
-    // }
+    match args.command {
+        Commands::List => {
+            println!("Available definitions:");
+            for (i, def) in api::REGISTRY.lock().unwrap().iter().enumerate() {
+                println!("{}: {}", i, def.name);
+            }
+        }
+        Commands::Run { name } => {
+            vm.run_definition(name)?;
+        }
+        Commands::Repl => {
+            // repl::repl(&mut runtime)?;
+        }
+        Commands::Test => {
+            // runtime.run_tests()?;
+        }
+    }
 
     Ok(())
 }

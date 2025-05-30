@@ -56,30 +56,8 @@ impl Vm {
 
     pub fn run(&self) -> Result<()> {
         Python::with_gil(|py| {
-            let sys = py.import("sys")?;
-            let version: String = sys.getattr("version")?.extract()?;
-            tracing::debug!("Python version: {}", version);
-
-            let venv_path = use_venv();
-            if let Some(venv) = venv_path {
-                tracing::debug!("Using virtual environment: {}", venv);
-                let site_packages = PathBuf::from(venv)
-                    .join("lib")
-                    .join("python3.11")
-                    .join("site-packages");
-                let site = py.import("site")?;
-                site.call_method1("addsitedir", (site_packages,))?;
-            } else {
-                tracing::warn!(
-                    "No virtual environment found, using system Python: {}",
-                    version
-                );
-            }
-
-            let neocurl = crate::api::make_rust_module(py)?;
-            sys.getattr("modules")?
-                .set_item("neocurl", neocurl)
-                .context("Failed to set rustapi module in sys.modules")?;
+            load_venv_libs(py).context("Failed to load virtual environment libraries")?;
+            add_neocurl_module(py).context("Failed to add neocurl module")?;
 
             let code = CString::new(self.source.clone())
                 .expect("Failed to create CString from source code");
@@ -89,6 +67,20 @@ impl Vm {
             // let global = module.getattr("on_init").context("Failed to get on_init")?;
             // let _ = global.call0()?;
 
+            Ok(())
+        })
+    }
+
+    pub fn run_definition(&self, name: String) -> Result<()> {
+        Python::with_gil(|py| {
+            for def in crate::api::REGISTRY.lock().unwrap().iter() {
+                if def.name == name {
+                    let func = def.func.as_ref();
+                    func.call0(py)
+                        .context(format!("Failed to call definition: {}", name))?;
+                    return Ok(());
+                }
+            }
             Ok(())
         })
     }
@@ -117,4 +109,38 @@ fn use_venv() -> Option<String> {
     }
 
     None
+}
+
+/// Load libs from venv
+fn load_venv_libs(py: Python<'_>) -> Result<()> {
+    let sys = py.import("sys")?;
+    let version: String = sys.getattr("version")?.extract()?;
+    tracing::debug!("Python version: {}", version);
+
+    if let Some(venv) = use_venv() {
+        let site_packages = PathBuf::from(venv)
+            .join("lib")
+            .join("python3.11")
+            .join("site-packages");
+        let site = py.import("site")?;
+        site.call_method1("addsitedir", (site_packages,))?;
+    } else {
+        tracing::warn!(
+            "No virtual environment found, using system Python: {}",
+            version
+        );
+    }
+
+    Ok(())
+}
+
+/// Add neocurl module
+fn add_neocurl_module(py: Python<'_>) -> Result<()> {
+    let neocurl = crate::api::make_rust_module(py)?;
+    let sys = py.import("sys")?;
+    sys.getattr("modules")?
+        .set_item("neocurl", neocurl)
+        .context("Failed to set neocurl module in sys.modules")?;
+
+    Ok(())
 }
