@@ -55,20 +55,28 @@ impl Vm {
     }
 
     pub fn run(&self) -> Result<()> {
-        Python::with_gil(|py| {
+        Python::with_gil(|py| -> Result<()> {
             load_venv_libs(py).context("Failed to load virtual environment libraries")?;
             add_neocurl_module(py).context("Failed to add neocurl module")?;
 
+            Ok(())
+        })?;
+
+        Python::with_gil(|py| -> Result<()> {
             let code = CString::new(self.source.clone())
                 .expect("Failed to create CString from source code");
-            let _module = PyModule::from_code(py, &code, c_str!("neocurl.py"), c_str!("neocurl"))
+            let _module = PyModule::from_code(py, &code, c_str!("neocurl.py"), c_str!("main"))
                 .context("Failed to create module from code")?;
 
-            // let global = module.getattr("on_init").context("Failed to get on_init")?;
-            // let _ = global.call0()?;
+            let on_init = super::api::ON_INIT.lock().unwrap();
+            if let Some(func) = on_init.as_ref() {
+                func.call0(py).context("Failed to call on_init function")?;
+            }
 
             Ok(())
-        })
+        })?;
+
+        Ok(())
     }
 
     pub fn run_definition(&self, name: String) -> Result<()> {
@@ -136,11 +144,10 @@ fn load_venv_libs(py: Python<'_>) -> Result<()> {
 
 /// Add neocurl module
 fn add_neocurl_module(py: Python<'_>) -> Result<()> {
-    let neocurl = crate::api::make_rust_module(py)?;
-    let sys = py.import("sys")?;
-    sys.getattr("modules")?
-        .set_item("neocurl", neocurl)
-        .context("Failed to set neocurl module in sys.modules")?;
+    let sys_modules = py.import("sys")?.getattr("modules")?;
+    let module = PyModule::new(py, "neocurl")?;
+    super::api::neocurl_py_module(&module)?;
+    sys_modules.set_item("neocurl", module)?;
 
     Ok(())
 }
