@@ -53,6 +53,11 @@ pub fn run() -> Result<()> {
         }
         Commands::Run { name } => {
             vm.run_definition(name)?;
+
+            let (_, failed) = api::TESTS.lock().unwrap().clone();
+            if failed > 0 {
+                std::process::exit(1);
+            }
         }
         Commands::Repl => {
             // repl::repl(&mut runtime)?;

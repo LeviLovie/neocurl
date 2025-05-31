@@ -24,6 +24,9 @@ def get(client):
     response = client.send(nc.Request("https://httpbin.org/get"))
     nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
 
+    if not nc.assert_t(response.status_code == 200):
+        nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
+
 @nc.define
 def post(client):
     nc.info("Sending POST request")
@@ -35,6 +38,13 @@ def post(client):
     response = client.send(request)
     nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
 
-    if response.status_code == 200:
-        body = orjson.loads(response.body)
-        nc.debug(f"Response body: {body}")
+    if not nc.assert_f(response.status_code != 200):
+        nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
+
+    body = orjson.loads(response.body)
+    nc.debug(f"Response body: {body}")
+
+@nc.define
+def fail(client):
+    if not nc.assert_t(False):
+        nc.error("This assertion should fail")

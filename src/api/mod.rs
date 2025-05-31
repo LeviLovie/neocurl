@@ -3,17 +3,19 @@ mod define;
 mod env;
 mod logger;
 mod on_init;
+mod tests;
 mod version;
+
+pub use client::PyClient;
+pub use logger::{PyLogLevel, LOGGER_CONFIG};
 
 use once_cell::sync::Lazy;
 use pyo3::prelude::*;
 use std::sync::Mutex;
 
-pub use client::PyClient;
-pub use logger::{PyLogLevel, LOGGER_CONFIG};
-
 pub static REGISTRY: Lazy<Mutex<Vec<Py<PyAny>>>> = Lazy::new(|| Mutex::new(Vec::new()));
 pub static ON_INIT: Lazy<Mutex<Option<Py<PyAny>>>> = Lazy::new(|| Mutex::new(None));
+pub static TESTS: Lazy<Mutex<(u32, u32)>> = Lazy::new(|| Mutex::new((0, 0)));
 
 #[pymodule(name = "neocurl")]
 pub fn neocurl_py_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -22,6 +24,7 @@ pub fn neocurl_py_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     env::register(m)?;
     logger::register(m)?;
     on_init::register(m)?;
+    tests::register(m)?;
     version::register(m)?;
 
     Ok(())

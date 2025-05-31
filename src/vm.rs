@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use owo_colors::{OwoColorize, XtermColors};
 use pyo3::{ffi::c_str, prelude::*, types::PyAnyMethods, Python};
 use std::{ffi::CString, path::PathBuf};
 
@@ -84,17 +85,27 @@ impl Vm {
             for def in crate::api::REGISTRY.lock().unwrap().iter() {
                 let def_ref = def.as_ref();
                 let def_name = def_ref.getattr(py, "__name__")?.extract::<String>(py)?;
+
                 if def_name == name {
                     tracing::debug!("Running definition: {}", name);
+                    super::api::LOGGER_CONFIG.lock().unwrap().set_context(name);
 
                     tracing::debug!("Tring to call definition with 0 args");
-                    if let Ok(_) = def_ref.call0(py) {
-                        return Ok(());
+                    if let Err(_) = def_ref.call0(py) {
+                        tracing::debug!("Definition does not accept 0 args, trying with client");
+                        let client = Py::new(py, super::api::PyClient {})?;
+                        def_ref.call1(py, (client,))?;
                     }
 
-                    tracing::debug!("Definition does not accept 0 args, trying with client");
-                    let client = Py::new(py, super::api::PyClient {})?;
-                    def_ref.call1(py, (client,))?;
+                    super::api::LOGGER_CONFIG.lock().unwrap().clear_context();
+                    let (passed, failed) = super::api::TESTS.lock().unwrap().clone();
+                    println!(
+                        "{} {}{}{}",
+                        "Test results:".color(XtermColors::DarkGray),
+                        passed.green(),
+                        "/".color(XtermColors::DarkGray),
+                        failed.red()
+                    );
 
                     return Ok(());
                 }

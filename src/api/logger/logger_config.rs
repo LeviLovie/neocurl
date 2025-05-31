@@ -32,7 +32,7 @@ impl PyLoggerConfig {
         self.context = Some(context);
     }
 
-    pub fn remove_context(&mut self) {
+    pub fn clear_context(&mut self) {
         self.context = None;
     }
 }
