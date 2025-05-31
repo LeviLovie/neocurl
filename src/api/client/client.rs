@@ -43,6 +43,7 @@ impl PyClient {
             headers: Some(headers),
             body: Some(response_body),
             elapsed: duration.as_nanos() as u64,
+            elapsed_seconds: duration.as_secs_f64(),
         })
     }
 }

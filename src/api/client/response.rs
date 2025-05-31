@@ -1,7 +1,7 @@
-use pyo3::{prelude::*, types::PyType};
+use pyo3::prelude::*;
 
 #[pyclass(name = "Response")]
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PyResponse {
     #[pyo3(get)]
     pub status: String,
@@ -17,14 +17,9 @@ pub struct PyResponse {
 
     #[pyo3(get)]
     pub elapsed: u64,
-}
 
-#[pymethods]
-impl PyResponse {
-    #[classmethod]
-    fn elapsed_seconds(_cls: &Bound<'_, PyType>, elapsed: u64) -> f64 {
-        elapsed as f64 / 1_000_000.0 // Convert nanoseconds to seconds
-    }
+    #[pyo3(get)]
+    pub elapsed_seconds: f64,
 }
 
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {

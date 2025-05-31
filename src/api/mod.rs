@@ -1,5 +1,6 @@
 mod client;
 mod define;
+mod env;
 mod logger;
 mod on_init;
 mod version;
@@ -18,6 +19,7 @@ pub static ON_INIT: Lazy<Mutex<Option<Py<PyAny>>>> = Lazy::new(|| Mutex::new(Non
 pub fn neocurl_py_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     client::register(m)?;
     define::register(m)?;
+    env::register(m)?;
     logger::register(m)?;
     on_init::register(m)?;
     version::register(m)?;
