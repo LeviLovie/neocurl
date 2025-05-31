@@ -85,12 +85,22 @@ impl Vm {
                 let def_ref = def.as_ref();
                 let def_name = def_ref.getattr(py, "__name__")?.extract::<String>(py)?;
                 if def_name == name {
-                    let _ = def_ref.call0(py);
+                    tracing::debug!("Running definition: {}", name);
+
+                    tracing::debug!("Tring to call definition with 0 args");
+                    if let Ok(_) = def_ref.call0(py) {
+                        return Ok(());
+                    }
+
+                    tracing::debug!("Definition does not accept 0 args, trying with client");
+                    let client = Py::new(py, super::api::PyClient {})?;
+                    def_ref.call1(py, (client,))?;
+
                     return Ok(());
                 }
             }
 
-            Ok(())
+            return Err(anyhow::anyhow!("Definition not found: {}", name));
         })
     }
 
