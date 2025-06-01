@@ -4,7 +4,7 @@ import neocurl as nc
 
 @nc.on_init
 def main():
-    if not nc.check_version("2.0.0-alpha.1"):
+    if not nc.check_version("2.0.0-alpha.2"):
         nc.fatal(f"This version of neocurl is not compatible with this script: {nc.version()}")
 
     logger_config = nc.get_logger_config()

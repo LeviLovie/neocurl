@@ -1,0 +1,6 @@
+[book]
+authors = ["LeviLovie"]
+language = "en"
+multilingual = false
+src = "src"
+title = "NeoCurl"

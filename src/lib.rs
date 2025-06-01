@@ -5,6 +5,8 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use owo_colors::{OwoColorize, XtermColors};
 
+const DEFAULT_FILE: &[u8] = include_bytes!("default.py");
+
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
 #[clap(version)]
@@ -17,8 +19,9 @@ struct Args {
 }
 
 /// Commands for the CLI
-#[derive(Subcommand, Clone)]
+#[derive(Subcommand, Clone, Eq, PartialEq, Debug)]
 enum Commands {
+    Init,
     Repl,
     Run { name: String },
     List,
@@ -36,6 +39,19 @@ pub fn run() -> Result<()> {
         .file
         .clone()
         .unwrap_or_else(|| "neocurl.py".to_string());
+
+    if args.command == Commands::Init {
+        if std::path::Path::new(&file).exists() {
+            tracing::warn!("File {} already exists, skipping initialization", file);
+            return Ok(());
+        }
+
+        std::fs::write(&file, DEFAULT_FILE)
+            .context(format!("Failed to write default file to {}", file))?;
+        println!("Initialized successfully at {}.", file);
+
+        return Ok(());
+    }
 
     let vm = vm::Vm::builder()
         .load(file)
@@ -85,6 +101,10 @@ pub fn run() -> Result<()> {
         Commands::Test => {
             unimplemented!("Test mode is not implemented yet");
             // runtime.run_tests()?;
+        }
+        _ => {
+            tracing::error!("Unknown command: {:?}", args.command);
+            return Err(anyhow::anyhow!("Unknown command"));
         }
     }
 
