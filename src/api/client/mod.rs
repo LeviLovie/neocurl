@@ -13,7 +13,6 @@ use pyo3::prelude::*;
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     client::register(module)?;
     method::register(module)?;
-    request::register(module)?;
     response::register(module)?;
 
     Ok(())

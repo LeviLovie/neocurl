@@ -9,6 +9,8 @@ pub enum PyMethod {
 
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyMethod>()?;
+    module.add("GET", PyMethod::Get)?;
+    module.add("POST", PyMethod::Post)?;
 
     Ok(())
 }

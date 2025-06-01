@@ -1,18 +1,11 @@
-use super::{PyRequest, PyResponse};
-use pyo3::{prelude::*, types::PyType};
+use super::{PyMethod, PyRequest, PyResponse};
+use pyo3::{prelude::*, types::PyDict};
 
 #[pyclass(name = "Client")]
 pub struct PyClient {}
 
-#[pymethods]
 impl PyClient {
-    #[new]
-    fn __new__() -> Self {
-        PyClient {}
-    }
-
-    #[classmethod]
-    fn send(_cls: &Bound<'_, PyType>, request: PyRequest) -> PyResult<PyResponse> {
+    fn send_request(&self, request: PyRequest) -> PyResult<PyResponse> {
         let request_builder = request.to_reqwest_blocking();
 
         let start = std::time::Instant::now();
@@ -45,6 +38,37 @@ impl PyClient {
             elapsed: duration.as_nanos() as u64,
             elapsed_seconds: duration.as_secs_f64(),
         })
+    }
+}
+
+#[pymethods]
+impl PyClient {
+    #[new]
+    fn __new__() -> Self {
+        PyClient {}
+    }
+
+    #[pyo3(signature = (url, **kwargs))]
+    fn send(&mut self, url: String, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<PyResponse> {
+        let method = kwargs
+            .and_then(|d| d.get_item("method").ok()?)
+            .and_then(|m| m.extract::<PyMethod>().ok())
+            .unwrap_or(PyMethod::Get);
+
+        let request = PyRequest::from_kwargs(url, method, kwargs)?;
+        self.send_request(request)
+    }
+
+    #[pyo3(signature = (url, **kwargs))]
+    fn get(&mut self, url: String, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<PyResponse> {
+        let request = PyRequest::from_kwargs(url, PyMethod::Get, kwargs)?;
+        self.send_request(request)
+    }
+
+    #[pyo3(signature = (url, **kwargs))]
+    fn post(&mut self, url: String, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<PyResponse> {
+        let request = PyRequest::from_kwargs(url, PyMethod::Post, kwargs)?;
+        self.send_request(request)
     }
 }
 

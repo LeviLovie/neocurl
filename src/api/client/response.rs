@@ -22,6 +22,27 @@ pub struct PyResponse {
     pub elapsed_seconds: f64,
 }
 
+#[pymethods]
+impl PyResponse {
+    fn print(&self) {
+        let headers = self.headers.as_ref().map_or("None".to_string(), |h| {
+            h.iter()
+                .map(|(k, v)| format!("({}: {})", k, v))
+                .collect::<Vec<_>>()
+                .join(",\n    ")
+        });
+
+        println!("Response:");
+        println!("  Status: {} {}", self.status_code, self.status);
+        println!("  Elapsed: {:.2}s", self.elapsed_seconds);
+        println!("  Headers:\n    {}", headers);
+        println!(
+            "  Body:\n{}",
+            self.body.as_ref().map_or("None".to_string(), |b| b.clone())
+        );
+    }
+}
+
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyResponse>()?;
 

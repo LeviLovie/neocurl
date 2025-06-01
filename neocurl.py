@@ -21,21 +21,19 @@ def main():
 def get(client):
     nc.debug("Sending GET request")
 
-    response = client.send(nc.Request("https://httpbin.org/get"))
+    response = client.get("https://httpbin.org/get", headers=[("User-Agent", "neocurl/2.0.0-indev")], params=[("foo", "bar")])
     nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
 
     if not nc.assert_t(response.status_code == 200):
         nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
 
+    response.print()
+
 @nc.define
 def post(client):
     nc.info("Sending POST request")
 
-    request = nc.Request("https://httpbin.org/post")
-    request.method = nc.Method.Post
-    request.body = "Hello, World!"
-
-    response = client.send(request)
+    response = client.send("https://httpbin.org/post", method=nc.POST, body="Hello, world!".encode())
     nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
 
     if not nc.assert_f(response.status_code != 200):
