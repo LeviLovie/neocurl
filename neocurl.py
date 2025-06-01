@@ -65,7 +65,7 @@ def get_async(client):
     responses = client.send_async(
         "http://localhost:3246",
         timeout = 5000,
-        threads = 1024,
+        threads = 1,
         amount = 1024 * 16,
     )
 

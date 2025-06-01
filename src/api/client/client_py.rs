@@ -97,6 +97,7 @@ impl PyClient {
                         let start = std::time::Instant::now();
 
                         if let Ok(response) = client.execute(req).await {
+                            let duration = start.elapsed();
                             let status_code = response.status().as_u16();
                             let status = response.status().to_string();
                             let headers = response
@@ -112,10 +113,12 @@ impl PyClient {
                                 status,
                                 headers: Some(headers),
                                 body,
-                                duration: start.elapsed().as_millis() as u64,
+                                duration: duration.as_millis() as u64,
                             };
 
-                            let _ = tx.send(response);
+                            if let Err(e) = tx.send(response) {
+                                eprintln!("Failed to send response: {}", e);
+                            }
                         }
 
                         progress_bar.inc(1);
