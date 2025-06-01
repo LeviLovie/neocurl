@@ -1,4 +1,4 @@
-use super::{PyLogLevel, LOGGER_CONFIG};
+use super::{LOGGER_CONFIG, PyLogLevel};
 use pyo3::prelude::*;
 
 #[pyclass(name = "LoggerConfig")]

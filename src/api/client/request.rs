@@ -31,7 +31,7 @@ impl PyRequest {
                         Err(_) => {
                             return Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
                                 "Body must be a string or bytes",
-                            ))
+                            ));
                         }
                     }
                 }
@@ -47,7 +47,7 @@ impl PyRequest {
                 Err(_) => {
                     return Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
                         "Headers must be a dictionary with string keys and values",
-                    ))
+                    ));
                 }
             }
         } else {
@@ -61,7 +61,7 @@ impl PyRequest {
                 Err(_) => {
                     return Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
                         "Params must be a dictionary with string keys and values",
-                    ))
+                    ));
                 }
             }
         } else {
@@ -85,7 +85,10 @@ impl PyRequest {
 
     #[allow(dead_code)]
     pub fn to_reqwest(&self) -> reqwest::RequestBuilder {
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .pool_max_idle_per_host(1_000_000)
+            .build()
+            .expect("Failed to build reqwest client");
 
         let mut request_builder = match self.method {
             PyMethod::Get => client.get(&self.url),
@@ -112,7 +115,10 @@ impl PyRequest {
     }
 
     pub fn to_reqwest_blocking(&self) -> reqwest::blocking::RequestBuilder {
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::blocking::Client::builder()
+            .pool_max_idle_per_host(1_000_000)
+            .build()
+            .expect("Failed to build reqwest client");
 
         let mut request_builder = match self.method {
             PyMethod::Get => client.get(&self.url),
@@ -135,6 +141,8 @@ impl PyRequest {
             request_builder = request_builder.body(body.clone());
         }
 
-        request_builder.timeout(std::time::Duration::from_millis(self.timeout))
+        // request_builder.timeout(std::time::Duration::from_millis(self.timeout))
+
+        request_builder
     }
 }

@@ -1,4 +1,4 @@
-use super::{PyLogLevel, PyLoggerConfig, LOGGER_CONFIG};
+use super::{LOGGER_CONFIG, PyLogLevel, PyLoggerConfig};
 use owo_colors::{OwoColorize, XtermColors};
 use pyo3::prelude::*;
 

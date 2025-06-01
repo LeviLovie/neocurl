@@ -8,7 +8,7 @@ mod tests;
 mod version;
 
 pub use client::PyClient;
-pub use logger::{PyLogLevel, LOGGER_CONFIG};
+pub use logger::{LOGGER_CONFIG, PyLogLevel};
 
 use once_cell::sync::Lazy;
 use pyo3::prelude::*;

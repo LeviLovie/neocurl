@@ -57,3 +57,20 @@ def post(client):
 
     body = orjson.loads(response.body)
     nc.debug(f"Response body: {body}")
+
+@nc.define
+def get_async(client):
+    nc.info("Sending asynchronous request")
+
+    responses = client.send_async(
+        "http://localhost:3246",
+        timeout = 5000,
+        threads = 1024,
+        amount = 1024 * 16,
+    )
+
+    nc.info(f"Received {len(responses)} responses")
+
+    for response in responses:
+        if not nc.assert_t(response.status_code == 200):
+            nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
