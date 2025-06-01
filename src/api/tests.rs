@@ -7,12 +7,12 @@ fn assert_t(cond: bool) -> PyResult<bool> {
     let pass = cond;
 
     if pass {
-        (*tests).0 += 1;
+        tests.0 += 1;
     } else {
-        (*tests).1 += 1;
+        tests.1 += 1;
     }
 
-    return Ok(pass);
+    Ok(pass)
 }
 
 #[pyfunction]
@@ -21,12 +21,12 @@ fn assert_f(cond: bool) -> PyResult<bool> {
     let pass = !cond;
 
     if pass {
-        (*tests).0 += 1;
+        tests.0 += 1;
     } else {
-        (*tests).1 += 1;
+        tests.1 += 1;
     }
 
-    return Ok(pass);
+    Ok(pass)
 }
 
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {

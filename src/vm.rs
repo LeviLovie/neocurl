@@ -8,11 +8,13 @@ pub struct VmBuilder {
     loaded: Option<(PathBuf, String)>,
 }
 
-impl VmBuilder {
-    pub fn new() -> Self {
-        VmBuilder { loaded: None }
+impl Default for VmBuilder {
+    fn default() -> Self {
+        Self::new()
     }
+}
 
+impl VmBuilder {
     /// Adds a source code file to the VM builder.
     #[tracing::instrument(skip_all, fields(source))]
     pub fn load(mut self, source: String) -> Result<Self> {
@@ -33,16 +35,20 @@ impl VmBuilder {
         Ok(self)
     }
 
+    pub fn new() -> Self {
+        VmBuilder { loaded: None }
+    }
+
     pub fn build(self) -> Result<Vm> {
         if self.loaded.is_none() {
             return Err(anyhow::anyhow!("No source code file loaded"));
         }
         let (path, source) = self.loaded.unwrap();
 
-        return Ok(Vm {
+        Ok(Vm {
             source,
             _path: path,
-        });
+        })
     }
 }
 
@@ -84,8 +90,7 @@ impl Vm {
     pub fn run_definition(&self, name: String) -> Result<()> {
         Python::with_gil(|py| {
             for def in crate::api::REGISTRY.lock().unwrap().iter() {
-                let def_ref = def.as_ref();
-                let def_name = def_ref.getattr(py, "__name__")?.extract::<String>(py)?;
+                let def_name = def.getattr(py, "__name__")?.extract::<String>(py)?;
 
                 if def_name == name {
                     tracing::debug!("Running definition: {}", name);
@@ -95,16 +100,14 @@ impl Vm {
                         .set_context(name.clone());
 
                     let client = Py::new(py, super::api::PyClient {})?;
-                    let res = def_ref.call1(py, (client,));
+                    let res = def.call1(py, (client,));
 
                     if let Err(e) = res {
                         TESTS.lock().unwrap().1 += 1;
                         CALLS.lock().unwrap().1 += 1;
 
-                        let code: CString = CString::new(format!(
-                            "import neocurl\nneocurl.error(\"{}\")",
-                            e.to_string()
-                        ))?;
+                        let code: CString =
+                            CString::new(format!("import neocurl\nneocurl.error(\"{}\")", e))?;
                         py.run(code.as_c_str(), None, None).context(format!(
                             "Failed to run error code for definition: {}",
                             name
@@ -119,7 +122,7 @@ impl Vm {
                 }
             }
 
-            return Err(anyhow::anyhow!("Definition not found: {}", name));
+            Err(anyhow::anyhow!("Definition not found: {}", name))
         })
     }
 

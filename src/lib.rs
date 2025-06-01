@@ -55,7 +55,7 @@ pub fn run() -> Result<()> {
         Commands::Run { name } => {
             vm.run_definition(name)?;
 
-            let (tests_passed, tests_failed) = api::TESTS.lock().unwrap().clone();
+            let (tests_passed, tests_failed) = *api::TESTS.lock().unwrap();
             println!(
                 "{} {}{}{}",
                 "Test results:".color(XtermColors::DarkGray),
@@ -63,7 +63,7 @@ pub fn run() -> Result<()> {
                 "/".color(XtermColors::DarkGray),
                 tests_failed.red()
             );
-            let (calls_passed, calls_failed) = api::CALLS.lock().unwrap().clone();
+            let (calls_passed, calls_failed) = *api::CALLS.lock().unwrap();
             println!(
                 "{} {}{}{}",
                 "Call results:".color(XtermColors::DarkGray),
