@@ -21,7 +21,7 @@ def main():
 def get(client):
     nc.debug("Sending GET request")
 
-    response = client.get("https://httpbin.org/get", headers=[("User-Agent", "neocurl/2.0.0-indev")], params=[("foo", "bar")])
+    response = client.get("https://httpbin.org/get")
     nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
 
     if not nc.assert_t(response.status_code == 200):
@@ -33,16 +33,24 @@ def get(client):
 def post(client):
     nc.info("Sending POST request")
 
-    response = client.send("https://httpbin.org/post", method=nc.POST, body="Hello, world!".encode())
+    response = client.send(
+        "https://httpbin.org/post",
+        method = nc.POST,
+        body = "Hello, world!".encode(),
+        headers = {
+            "Content-Type": "binary/octet-stream",
+            "User-Agent": "Neocurl/2.0.0-indev"
+        },
+        params = {
+            "foo": "bar",
+        }
+    )
     nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
 
     if not nc.assert_f(response.status_code != 200):
         nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
 
+    response.print()
+
     body = orjson.loads(response.body)
     nc.debug(f"Response body: {body}")
-
-@nc.define
-def fail(client):
-    if not nc.assert_t(False):
-        nc.error("This assertion should fail")

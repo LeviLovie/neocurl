@@ -55,19 +55,19 @@ impl PyClient {
             .and_then(|m| m.extract::<PyMethod>().ok())
             .unwrap_or(PyMethod::Get);
 
-        let request = PyRequest::from_kwargs(url, method, kwargs)?;
+        let request = PyRequest::from_args(url, method, kwargs)?;
         self.send_request(request)
     }
 
     #[pyo3(signature = (url, **kwargs))]
     fn get(&mut self, url: String, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<PyResponse> {
-        let request = PyRequest::from_kwargs(url, PyMethod::Get, kwargs)?;
+        let request = PyRequest::from_args(url, PyMethod::Get, kwargs)?;
         self.send_request(request)
     }
 
     #[pyo3(signature = (url, **kwargs))]
     fn post(&mut self, url: String, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<PyResponse> {
-        let request = PyRequest::from_kwargs(url, PyMethod::Post, kwargs)?;
+        let request = PyRequest::from_args(url, PyMethod::Post, kwargs)?;
         self.send_request(request)
     }
 }
