@@ -43,7 +43,7 @@ pub fn run() -> Result<()> {
         .build()
         .context("Failed to build VM")?;
 
-    vm.run().context("Failed to run VM")?;
+    vm.init().context("Failed to run VM")?;
 
     match args.command {
         Commands::List => {
@@ -71,6 +71,8 @@ pub fn run() -> Result<()> {
                 "/".color(XtermColors::DarkGray),
                 calls_failed.red()
             );
+
+            vm.cleanup().context("Failed to cleanup VM")?;
 
             if tests_failed > 0 || calls_failed > 0 {
                 std::process::exit(1);

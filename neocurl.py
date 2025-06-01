@@ -4,7 +4,7 @@ import neocurl as nc
 
 @nc.on_init
 def main():
-    if not nc.check_version("2.0.0-indev"):
+    if not nc.check_version("2.0.0-alpha.1"):
         nc.fatal(f"This version of neocurl is not compatible with this script: {nc.version()}")
 
     logger_config = nc.get_logger_config()
@@ -16,6 +16,10 @@ def main():
     logger_config.use_colors = True
     nc.set_logger_config(logger_config)
     nc.log(nc.LogLevel.Info, "Neocurl initialized")
+
+@nc.on_cleanup
+def cleanup():
+    nc.log(nc.LogLevel.Info, "Neocurl cleanup complete")
 
 @nc.define
 def get(client):

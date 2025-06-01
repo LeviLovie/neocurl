@@ -62,29 +62,34 @@ impl Vm {
         VmBuilder::new()
     }
 
-    pub fn run(&self) -> Result<()> {
+    pub fn init(&self) -> Result<()> {
         Python::with_gil(|py| -> Result<()> {
-            load_venv_libs(py).context("Failed to load virtual environment libraries")?;
-            add_neocurl_module(py).context("Failed to add neocurl module")?;
-
+            self.load_venv_libs(py)
+                .context("Failed to load virtual environment libraries")?;
+            self.add_neocurl_module(py)
+                .context("Failed to add neocurl module")?;
             Ok(())
         })?;
 
         Python::with_gil(|py| -> Result<()> {
-            let code = CString::new(self.source.clone())
-                .expect("Failed to create CString from source code");
-            let _module = PyModule::from_code(py, &code, c_str!("neocurl.py"), c_str!("main"))
-                .context("Failed to create module from code")?;
-
-            let on_init = super::api::ON_INIT.lock().unwrap();
-            if let Some(func) = on_init.as_ref() {
-                func.call0(py).context("Failed to call on_init function")?;
-            }
+            let _ = self
+                .create_module_from_code(py)
+                .context("Failed to create module from source code")?;
+            self.run_on_init(py)?;
 
             Ok(())
         })?;
 
         Ok(())
+    }
+
+    pub fn cleanup(&self) -> Result<()> {
+        Python::with_gil(|py| -> Result<()> {
+            self.run_on_cleanup(py)
+                .context("Failed to run on_cleanup function")?;
+
+            Ok(())
+        })
     }
 
     pub fn run_definition(&self, name: String) -> Result<()> {
@@ -142,6 +147,73 @@ impl Vm {
                 .collect()
         })
     }
+
+    /// Load libs from venv
+    fn load_venv_libs(&self, py: Python<'_>) -> Result<()> {
+        let sys = py.import("sys")?;
+        let version: String = sys.getattr("version")?.extract()?;
+        tracing::debug!("Python version: {}", version);
+
+        if std::env::var("VIRTUAL_ENV").is_ok() {
+            if let Ok(venv) = std::env::var("VIRTUAL_ENV") {
+                let site_packages = PathBuf::from(venv)
+                    .join("lib")
+                    .join("python3.11")
+                    .join("site-packages");
+                let site = py.import("site")?;
+                site.call_method1("addsitedir", (site_packages,))?;
+                return Ok(());
+            }
+        }
+
+        tracing::warn!(
+            "No virtual environment found, using system Python: {}",
+            version
+        );
+
+        Ok(())
+    }
+
+    /// Adds the neocurl module to the Python interpreter
+    fn add_neocurl_module(&self, py: Python<'_>) -> Result<()> {
+        let sys_modules = py.import("sys")?.getattr("modules")?;
+        let module = PyModule::new(py, "neocurl")?;
+        super::api::neocurl_py_module(&module)?;
+        sys_modules.set_item("neocurl", module)?;
+
+        Ok(())
+    }
+
+    /// Adds the neocurl module to the Python interpreter
+    fn create_module_from_code<'a>(&self, py: Python<'a>) -> Result<Bound<'a, PyModule>> {
+        let code =
+            CString::new(self.source.clone()).expect("Failed to create CString from source code");
+        let module = PyModule::from_code(py, &code, c_str!("neocurl.py"), c_str!("main"))
+            .context("Failed to create module from code")?;
+
+        Ok(module)
+    }
+
+    /// Runs on_init function in the script
+    fn run_on_init(&self, py: Python<'_>) -> Result<()> {
+        let on_init = super::api::ON_INIT.lock().unwrap();
+        if let Some(func) = on_init.as_ref() {
+            func.call0(py).context("Failed to call on_init function")?;
+        }
+
+        Ok(())
+    }
+
+    /// Runs on_cleanup function in the script
+    fn run_on_cleanup(&self, py: Python<'_>) -> Result<()> {
+        let on_cleanup = super::api::ON_CLEANUP.lock().unwrap();
+        if let Some(func) = on_cleanup.as_ref() {
+            func.call0(py)
+                .context("Failed to call on_cleanup function")?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Reads the file specified in the arguments
@@ -156,48 +228,4 @@ fn read_file(file: String) -> Result<String> {
         std::fs::read_to_string(file_path).context(format!("Failed to read file: {}", file))?;
 
     Ok(file_contents)
-}
-
-/// Try to find venv
-fn use_venv() -> Option<String> {
-    if std::env::var("VIRTUAL_ENV").is_ok() {
-        if let Ok(venv) = std::env::var("VIRTUAL_ENV") {
-            return Some(venv);
-        }
-    }
-
-    None
-}
-
-/// Load libs from venv
-fn load_venv_libs(py: Python<'_>) -> Result<()> {
-    let sys = py.import("sys")?;
-    let version: String = sys.getattr("version")?.extract()?;
-    tracing::debug!("Python version: {}", version);
-
-    if let Some(venv) = use_venv() {
-        let site_packages = PathBuf::from(venv)
-            .join("lib")
-            .join("python3.11")
-            .join("site-packages");
-        let site = py.import("site")?;
-        site.call_method1("addsitedir", (site_packages,))?;
-    } else {
-        tracing::warn!(
-            "No virtual environment found, using system Python: {}",
-            version
-        );
-    }
-
-    Ok(())
-}
-
-/// Add neocurl module
-fn add_neocurl_module(py: Python<'_>) -> Result<()> {
-    let sys_modules = py.import("sys")?.getattr("modules")?;
-    let module = PyModule::new(py, "neocurl")?;
-    super::api::neocurl_py_module(&module)?;
-    sys_modules.set_item("neocurl", module)?;
-
-    Ok(())
 }
