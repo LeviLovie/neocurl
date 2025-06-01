@@ -89,7 +89,11 @@ impl PyRequest {
 
         let mut request_builder = match self.method {
             PyMethod::Get => client.get(&self.url),
+            PyMethod::Head => client.head(&self.url),
             PyMethod::Post => client.post(&self.url),
+            PyMethod::Put => client.put(&self.url),
+            PyMethod::Delete => client.delete(&self.url),
+            PyMethod::Patch => client.patch(&self.url),
         };
 
         for (key, value) in &self.headers {
@@ -112,7 +116,11 @@ impl PyRequest {
 
         let mut request_builder = match self.method {
             PyMethod::Get => client.get(&self.url),
+            PyMethod::Head => client.head(&self.url),
             PyMethod::Post => client.post(&self.url),
+            PyMethod::Put => client.put(&self.url),
+            PyMethod::Delete => client.delete(&self.url),
+            PyMethod::Patch => client.patch(&self.url),
         };
 
         for (key, value) in &self.headers {
