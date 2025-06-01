@@ -22,10 +22,9 @@ def get(client):
     nc.debug("Sending GET request")
 
     response = client.get("https://httpbin.org/get")
-    nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
+    nc.info(f"Response status: {response.status}, finished in {response.duration:.2f}ms")
 
-    if not nc.assert_t(response.status_code == 200):
-        nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
+    assert response.status_code == 200, f"Expected status code 200, but got {response.status_code} ({response.status})"
 
     response.print()
 
@@ -45,7 +44,7 @@ def post(client):
             "foo": "bar",
         }
     )
-    nc.info(f"Response status: {response.status}, finished in {response.elapsed_seconds:.2f}s")
+    nc.info(f"Response status: {response.status}, finished in {response.duration:.2f}ms")
 
     if not nc.assert_f(response.status_code != 200):
         nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")

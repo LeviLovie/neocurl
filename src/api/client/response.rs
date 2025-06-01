@@ -16,10 +16,7 @@ pub struct PyResponse {
     pub body: Option<String>,
 
     #[pyo3(get)]
-    pub elapsed: u64,
-
-    #[pyo3(get)]
-    pub elapsed_seconds: f64,
+    pub duration: u64,
 }
 
 #[pymethods]
@@ -34,7 +31,7 @@ impl PyResponse {
 
         println!("Response:");
         println!("  Status: {} {}", self.status_code, self.status);
-        println!("  Elapsed: {:.2}s", self.elapsed_seconds);
+        println!("  Duration: {:}", self.duration);
         println!("  Headers:\n    {}", headers);
         println!(
             "  Body:\n{}",

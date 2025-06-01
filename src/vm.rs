@@ -1,7 +1,8 @@
 use anyhow::{Context, Result};
-use owo_colors::{OwoColorize, XtermColors};
 use pyo3::{ffi::c_str, prelude::*, types::PyAnyMethods, Python};
 use std::{ffi::CString, path::PathBuf};
+
+use crate::api::{CALLS, TESTS};
 
 pub struct VmBuilder {
     loaded: Option<(PathBuf, String)>,
@@ -88,24 +89,31 @@ impl Vm {
 
                 if def_name == name {
                     tracing::debug!("Running definition: {}", name);
-                    super::api::LOGGER_CONFIG.lock().unwrap().set_context(name);
+                    super::api::LOGGER_CONFIG
+                        .lock()
+                        .unwrap()
+                        .set_context(name.clone());
 
-                    tracing::debug!("Tring to call definition with 0 args");
-                    if let Err(_) = def_ref.call0(py) {
-                        tracing::debug!("Definition does not accept 0 args, trying with client");
-                        let client = Py::new(py, super::api::PyClient {})?;
-                        def_ref.call1(py, (client,))?;
+                    let client = Py::new(py, super::api::PyClient {})?;
+                    let res = def_ref.call1(py, (client,));
+
+                    if let Err(e) = res {
+                        TESTS.lock().unwrap().1 += 1;
+                        CALLS.lock().unwrap().1 += 1;
+
+                        let code: CString = CString::new(format!(
+                            "import neocurl\nneocurl.error(\"{}\")",
+                            e.to_string()
+                        ))?;
+                        py.run(code.as_c_str(), None, None).context(format!(
+                            "Failed to run error code for definition: {}",
+                            name
+                        ))?;
+                    } else {
+                        CALLS.lock().unwrap().0 += 1;
                     }
 
                     super::api::LOGGER_CONFIG.lock().unwrap().clear_context();
-                    let (passed, failed) = super::api::TESTS.lock().unwrap().clone();
-                    println!(
-                        "{} {}{}{}",
-                        "Test results:".color(XtermColors::DarkGray),
-                        passed.green(),
-                        "/".color(XtermColors::DarkGray),
-                        failed.red()
-                    );
 
                     return Ok(());
                 }

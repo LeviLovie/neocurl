@@ -3,6 +3,7 @@ pub mod vm;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use owo_colors::{OwoColorize, XtermColors};
 
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
@@ -54,15 +55,33 @@ pub fn run() -> Result<()> {
         Commands::Run { name } => {
             vm.run_definition(name)?;
 
-            let (_, failed) = api::TESTS.lock().unwrap().clone();
-            if failed > 0 {
+            let (tests_passed, tests_failed) = api::TESTS.lock().unwrap().clone();
+            println!(
+                "{} {}{}{}",
+                "Test results:".color(XtermColors::DarkGray),
+                tests_passed.green(),
+                "/".color(XtermColors::DarkGray),
+                tests_failed.red()
+            );
+            let (calls_passed, calls_failed) = api::CALLS.lock().unwrap().clone();
+            println!(
+                "{} {}{}{}",
+                "Call results:".color(XtermColors::DarkGray),
+                calls_passed.green(),
+                "/".color(XtermColors::DarkGray),
+                calls_failed.red()
+            );
+
+            if tests_failed > 0 || calls_failed > 0 {
                 std::process::exit(1);
             }
         }
         Commands::Repl => {
+            unimplemented!("REPL mode is not implemented yet");
             // repl::repl(&mut runtime)?;
         }
         Commands::Test => {
+            unimplemented!("Test mode is not implemented yet");
             // runtime.run_tests()?;
         }
     }
