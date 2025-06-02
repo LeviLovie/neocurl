@@ -9,6 +9,7 @@ use tokio::{
 };
 
 #[pyclass(name = "Client")]
+#[derive(Default)]
 pub struct PyClient {}
 
 impl PyClient {
@@ -190,11 +191,6 @@ impl PyClient {
 
 #[pymethods]
 impl PyClient {
-    #[new]
-    fn __new__() -> Self {
-        PyClient {}
-    }
-
     #[pyo3(signature = (url, **kwargs))]
     fn send(&mut self, url: String, kwargs: Option<&Bound<'_, PyDict>>) -> PyResult<PyResponse> {
         let method = kwargs
@@ -285,8 +281,14 @@ impl PyClient {
     }
 }
 
+#[pyfunction()]
+fn client() -> PyClient {
+    PyClient::default()
+}
+
 pub fn register(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyClient>()?;
+    module.add_function(wrap_pyfunction!(client, module)?)?;
 
     Ok(())
 }
