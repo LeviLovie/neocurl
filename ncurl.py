@@ -80,3 +80,11 @@ def new_client(_unused_client):
     nc.info("Creating a new client and sending a get request")
 
     nc.client().send("https://httpbin.org/get").print()
+
+@nc.define
+def body_raw(client):
+    nc.info("Recieving raw body")
+    
+    response = client.post("https://httpbin.org/post", body="Hello, world!")
+
+    print("Raw body:", response.body_raw)

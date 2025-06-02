@@ -47,13 +47,7 @@ impl PyAsyncResponses {
         println!("  Status: {} {}", response.status_code, response.status);
         println!("  Duration: {:}", response.duration);
         println!("  Headers:\n    {}", headers);
-        println!(
-            "  Body:\n{}",
-            response
-                .body
-                .as_ref()
-                .map_or("None".to_string(), |b| b.clone())
-        );
+        println!("  Body:\n{}", response.body);
 
         Ok(())
     }
