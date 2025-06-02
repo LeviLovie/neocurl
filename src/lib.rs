@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use owo_colors::{OwoColorize, XtermColors};
 
-const DEFAULT_FILE: &[u8] = include_bytes!("default.py");
+const DEFAULT_FILE: &str = include_str!("default.py");
 
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
@@ -46,7 +46,11 @@ pub fn run() -> Result<()> {
             return Ok(());
         }
 
-        std::fs::write(&file, DEFAULT_FILE)
+        let default_file = DEFAULT_FILE
+            .to_string()
+            .replace("${VERSION}", env!("CARGO_PKG_VERSION"));
+
+        std::fs::write(&file, default_file)
             .context(format!("Failed to write default file to {}", file))?;
         println!("Initialized successfully at {}.", file);
 

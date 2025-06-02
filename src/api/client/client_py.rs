@@ -2,8 +2,11 @@ use super::{PyMethod, PyRequest, PyResponse};
 use indicatif::{ProgressBar, ProgressStyle};
 use pyo3::{prelude::*, types::PyDict};
 use reqwest::Client;
-use std::sync::Arc;
-use tokio::{sync::{mpsc, Semaphore}, task};
+use std::{collections::HashMap, sync::Arc};
+use tokio::{
+    sync::{Semaphore, mpsc},
+    task,
+};
 
 #[pyclass(name = "Client")]
 pub struct PyClient {}
@@ -21,11 +24,11 @@ impl PyClient {
         let status_code = response.status().as_u16();
         let status = response.status().to_string();
 
-        let headers = response
+        let headers: HashMap<String, String> = response
             .headers()
             .iter()
             .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
-            .collect::<Vec<_>>();
+            .collect();
 
         let response_body = response.text().map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
@@ -37,7 +40,7 @@ impl PyClient {
         Ok(PyResponse {
             status_code,
             status,
-            headers: Some(headers),
+            headers,
             body: Some(response_body),
             duration: duration.as_millis() as u64,
         })
@@ -100,18 +103,18 @@ impl PyClient {
                             let duration = start.elapsed();
                             let status_code = response.status().as_u16();
                             let status = response.status().to_string();
-                            let headers = response
+                            let headers: HashMap<String, String> = response
                                 .headers()
                                 .iter()
                                 .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
-                                .collect::<Vec<_>>();
+                                .collect();
 
                             let body = (response.text().await).ok();
 
                             let response = PyResponse {
                                 status_code,
                                 status,
-                                headers: Some(headers),
+                                headers,
                                 body,
                                 duration: duration.as_millis() as u64,
                             };
