@@ -1,11 +1,11 @@
-/// Lua Runtime
-pub mod lua;
-/// REPL
-pub mod repl;
+pub mod api;
+pub mod vm;
 
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use tracing::{Level, error, span, warn};
+use owo_colors::{OwoColorize, XtermColors};
+
+const DEFAULT_FILE: &str = include_str!("default.py");
 
 /// CLI Arguments using Clap
 #[derive(Clone, Parser)]
@@ -19,8 +19,9 @@ struct Args {
 }
 
 /// Commands for the CLI
-#[derive(Subcommand, Clone)]
+#[derive(Subcommand, Clone, Eq, PartialEq, Debug)]
 enum Commands {
+    Init,
     Repl,
     Run { name: String },
     List,
@@ -37,67 +38,79 @@ pub fn run() -> Result<()> {
     let file = args
         .file
         .clone()
-        .unwrap_or_else(|| "neocurl.lua".to_string());
-    let main_dir = std::path::PathBuf::from(file.clone())
-        .parent()
-        .unwrap()
-        .to_path_buf();
-    let (_, file_contents) = read_file(args.clone())?;
+        .unwrap_or_else(|| "neocurl.py".to_string());
 
-    let mut runtime = lua::LuaRuntime::builder()
-        .with_script(file_contents)
-        .with_main_dir(main_dir)
-        .libs()
-        .build()?;
+    if args.command == Commands::Init {
+        if std::path::Path::new(&file).exists() {
+            tracing::warn!("File {} already exists, skipping initialization", file);
+            return Ok(());
+        }
+
+        let default_file = DEFAULT_FILE
+            .to_string()
+            .replace("${VERSION}", env!("CARGO_PKG_VERSION"));
+
+        std::fs::write(&file, default_file)
+            .context(format!("Failed to write default file to {}", file))?;
+        println!("Initialized successfully at {}.", file);
+
+        return Ok(());
+    }
+
+    let vm = vm::Vm::builder()
+        .load(file)
+        .context("Failed to load source to VM")?
+        .build()
+        .context("Failed to build VM")?;
+
+    vm.init().context("Failed to run VM")?;
 
     match args.command {
         Commands::List => {
-            for (i, (_, name)) in runtime.list_refinitions().iter().enumerate() {
-                println!("{}: {}", i + 1, name);
+            println!("Available definitions:");
+            for (i, def) in vm.list_definitions().iter().enumerate() {
+                println!("{}: {}", i, def);
             }
         }
         Commands::Run { name } => {
-            runtime.run_definition(name)?;
+            vm.run_definition(name)?;
 
-            let (_, failed) = runtime.test_summary();
-            if failed > 0 {
+            let (tests_passed, tests_failed) = *api::TESTS.lock().unwrap();
+            println!(
+                "{} {}{}{}",
+                "Test results:".color(XtermColors::DarkGray),
+                tests_passed.green(),
+                "/".color(XtermColors::DarkGray),
+                tests_failed.red()
+            );
+            let (calls_passed, calls_failed) = *api::CALLS.lock().unwrap();
+            println!(
+                "{} {}{}{}",
+                "Call results:".color(XtermColors::DarkGray),
+                calls_passed.green(),
+                "/".color(XtermColors::DarkGray),
+                calls_failed.red()
+            );
+
+            vm.cleanup().context("Failed to cleanup VM")?;
+
+            if tests_failed > 0 || calls_failed > 0 {
                 std::process::exit(1);
             }
         }
         Commands::Repl => {
-            repl::repl(&mut runtime)?;
+            unimplemented!("REPL mode is not implemented yet");
+            // repl::repl(&mut runtime)?;
         }
         Commands::Test => {
-            runtime.run_tests()?;
+            unimplemented!("Test mode is not implemented yet");
+            // runtime.run_tests()?;
+        }
+        _ => {
+            tracing::error!("Unknown command: {:?}", args.command);
+            return Err(anyhow::anyhow!("Unknown command"));
         }
     }
 
     Ok(())
-}
-
-/// Reads the file specified in the arguments
-fn read_file(args: Args) -> Result<(String, String)> {
-    let span = span!(Level::INFO, "read_file", file = args.file);
-    let _enter = span.enter();
-
-    let file = args
-        .file
-        .clone()
-        .unwrap_or_else(|| "neocurl.lua".to_string());
-
-    let file_path = std::path::Path::new(&file);
-    if !file_path.exists() {
-        if args.file.is_none() {
-            warn!("No file specified, using default: neocurl.lua");
-        }
-        error!("File not found: {}", file);
-        return Err(anyhow!("No file specified"));
-    }
-
-    let file_contents = std::fs::read_to_string(file_path).map_err(|e| {
-        error!("Failed to read file: {}", e);
-        anyhow!("Failed to read file")
-    })?;
-
-    Ok((file, file_contents))
 }

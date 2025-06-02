@@ -9,7 +9,7 @@ fn main() {
     tracing::subscriber::set_global_default(registry).expect("Failed to set global subscriber");
 
     if let Err(e) = neocurl::run() {
-        tracing::error!("Error occured: {}", e);
+        tracing::error!("Error occured: {:?}", e);
         std::process::exit(1);
     }
 }
