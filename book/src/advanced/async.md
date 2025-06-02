@@ -11,7 +11,7 @@ It has two more keyword args:
 
   How many threads to use. Default is `1`.
 
-Function returns an array of `nc.Response`.
+Function returns `nc.AsyncResponses`.
 
 ## Rusty inner workings
 
