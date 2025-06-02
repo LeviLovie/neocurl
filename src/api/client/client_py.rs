@@ -1,4 +1,4 @@
-use super::{PyMethod, PyRequest, PyResponse};
+use super::{PyAsyncResponses, PyMethod, PyRequest, PyResponse, async_responses::ResponseStats};
 use indicatif::{ProgressBar, ProgressStyle};
 use pyo3::{prelude::*, types::PyDict};
 use reqwest::Client;
@@ -51,7 +51,7 @@ impl PyClient {
         request: PyRequest,
         amount: u32,
         threads: u32,
-    ) -> PyResult<Vec<PyResponse>> {
+    ) -> PyResult<PyAsyncResponses> {
         let progress_bar = ProgressBar::new(amount.into());
         let style = ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>5}/{len:5} {msg}",
@@ -68,6 +68,8 @@ impl PyClient {
             .map_err(|e| {
                 PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Runtime error: {}", e))
             })?;
+
+        let mut total_duration = 0;
 
         let results = rt.block_on(async {
             let request_template = Arc::new(
@@ -91,7 +93,7 @@ impl PyClient {
                 let progress_bar = progress_bar.clone();
 
                 let handle = task::spawn(async move {
-                    let client = Client::new(); // one client per thread
+                    let client = Client::new();
 
                     for _ in 0..per_thread {
                         let _permit = semaphore.acquire().await.unwrap();
@@ -99,30 +101,48 @@ impl PyClient {
 
                         let start = std::time::Instant::now();
 
-                        if let Ok(response) = client.execute(req).await {
-                            let duration = start.elapsed();
-                            let status_code = response.status().as_u16();
-                            let status = response.status().to_string();
-                            let headers: HashMap<String, String> = response
-                                .headers()
-                                .iter()
-                                .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
-                                .collect();
+                        match client.execute(req).await {
+                            Ok(response) => {
+                                let duration = start.elapsed();
+                                let status_code = response.status().as_u16();
+                                let status = response.status().to_string();
+                                let headers: HashMap<String, String> = response
+                                    .headers()
+                                    .iter()
+                                    .map(|(k, v)| {
+                                        (k.to_string(), v.to_str().unwrap_or("").to_string())
+                                    })
+                                    .collect();
 
-                            let body = (response.text().await).ok();
+                                let body = (response.text().await).ok();
 
-                            let response = PyResponse {
-                                status_code,
-                                status,
-                                headers,
-                                body,
-                                duration: duration.as_millis() as u64,
-                            };
+                                let response = PyResponse {
+                                    status_code,
+                                    status,
+                                    headers,
+                                    body,
+                                    duration: duration.as_millis() as u64,
+                                };
 
-                            if let Err(e) = tx.send(response) {
-                                eprintln!("Failed to send response: {}", e);
+                                if let Err(e) = tx.send(response) {
+                                    eprintln!("Failed to send response: {}", e);
+                                }
                             }
-                        }
+                            Err(e) => {
+                                let status = e
+                                    .status()
+                                    .unwrap_or(reqwest::StatusCode::INTERNAL_SERVER_ERROR);
+                                if let Err(e) = tx.send(PyResponse {
+                                    status_code: status.as_u16(),
+                                    status: status.to_string(),
+                                    headers: HashMap::new(),
+                                    body: None,
+                                    duration: start.elapsed().as_millis() as u64,
+                                }) {
+                                    eprintln!("Failed to send error response: {}", e);
+                                }
+                            }
+                        };
 
                         progress_bar.inc(1);
                     }
@@ -143,17 +163,28 @@ impl PyClient {
             }
 
             progress_bar.finish_and_clear();
-            let duration = sending_start.elapsed();
-            println!(
-                "Done in {} ms, {:.2} req/s",
-                duration.as_millis(),
-                amount as f64 / (duration.as_secs_f64() + 1e-9)
-            );
+
+            total_duration = sending_start.elapsed().as_millis() as u64;
 
             responses
         });
 
-        Ok(results)
+        println!("[{}] Responses received", results.len());
+
+        let durations: Vec<u64> = results.iter().map(|r| r.duration).collect();
+        let response_codes: Vec<u16> = results.iter().map(|r| r.status_code).collect();
+        let async_responses = PyAsyncResponses {
+            responses: results.clone(),
+            responses_stats: {
+                ResponseStats {
+                    durations,
+                    responses: response_codes,
+                    total_duration,
+                }
+            },
+        };
+
+        Ok(async_responses)
     }
 }
 
@@ -180,7 +211,7 @@ impl PyClient {
         &mut self,
         url: String,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Vec<PyResponse>> {
+    ) -> PyResult<PyAsyncResponses> {
         let method = kwargs
             .and_then(|d| d.get_item("method").ok()?)
             .and_then(|m| m.extract::<PyMethod>().ok())
@@ -211,7 +242,7 @@ impl PyClient {
         &mut self,
         url: String,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Vec<PyResponse>> {
+    ) -> PyResult<PyAsyncResponses> {
         let request = PyRequest::from_args(url, PyMethod::Get, kwargs)?;
 
         let amount = kwargs
@@ -238,7 +269,7 @@ impl PyClient {
         &mut self,
         url: String,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<Vec<PyResponse>> {
+    ) -> PyResult<PyAsyncResponses> {
         let request = PyRequest::from_args(url, PyMethod::Post, kwargs)?;
 
         let amount = kwargs

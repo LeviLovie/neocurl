@@ -9,10 +9,10 @@ ncurl init
 ```
 
 ```bash
-Initialized successfully at neocurl.py.
+Initialized successfully at ncurl.py.
 ```
 
-This will create a new file called `neocurl.py` with a default script inside.
+This will create a new file called `ncurl.py` with a default script inside.
 
 ## Verify
 
