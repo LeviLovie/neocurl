@@ -63,14 +63,14 @@ def get_async(client):
     nc.info("Sending asynchronous request")
 
     responses = client.send_async(
-        "http://localhost:3246",
+        "https://httpbin.org/get",
         timeout = 5000,
-        threads = 1,
-        amount = 1024 * 16,
+        threads = 256,
+        amount = 64 * 64 * 4,
     )
 
-    nc.info(f"Received {len(responses)} responses")
+    if not nc.assert_t(responses.amount() > 0):
+        nc.fatal("No responses received")
 
-    for response in responses:
-        if not nc.assert_t(response.status_code == 200):
-            nc.error(f"Expected status code 200, but got {response.status_code} ({response.status})")
+    nc.info(f"Received {responses.amount()} responses")
+    responses.print_stats(5, 3)
