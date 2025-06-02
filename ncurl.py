@@ -74,3 +74,9 @@ def get_async(client):
 
     nc.info(f"Received {responses.amount()} responses")
     responses.print_stats(5, 3)
+
+@nc.define
+def new_client(_unused_client):
+    nc.info("Creating a new client and sending a get request")
+
+    nc.client().send("https://httpbin.org/get").print()
