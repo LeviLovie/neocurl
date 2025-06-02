@@ -9,13 +9,8 @@ use tokio::{
 };
 
 #[pyclass(name = "Client")]
+#[derive(Default)]
 pub struct PyClient {}
-
-impl Default for PyClient {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl PyClient {
     fn send_request(&self, request: PyRequest) -> PyResult<PyResponse> {
