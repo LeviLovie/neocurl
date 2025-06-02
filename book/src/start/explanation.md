@@ -1,6 +1,6 @@
 # Explanation
 
-Lets take a look inside `neocurl.py`:
+Lets take a look inside `ncurl.py`:
 
 ```python
 import neocurl as nc

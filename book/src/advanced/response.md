@@ -1,9 +1,10 @@
 # Response
 
-The return type of `nc.Client.send()` and similar methods is `nc.Response`, a struct defined in `neocurl` module.
-It has no Python constructor and can only be retrieved from the client.
+## Sync
 
-## Fields
+The return type of `nc.Client.send()` and similar methods is `nc.Response`, a struct defined in `neocurl` module. It has no Python constructor and can only be retrieved from the client.
+
+### Fields
 
 - `status: str`
 
@@ -26,8 +27,44 @@ It has no Python constructor and can only be retrieved from the client.
 
   Response headers. A dictionary.
 
-## Functions
+### Methods
 
 - `print()`
 
   Prints information about the response in a human readable form.
+
+## Async
+
+The return type of async send functions is `nc.AsyncResponses`.
+
+### Fields
+
+- `responses: nc.Response[]`
+
+  An array of responses.
+
+### Methods
+
+- `amount() -> int`
+
+  Returns amount of responses.
+
+- `print_nth(id)`
+
+  Calls `print()` on nth element from `responses`.
+
+  - `id: int`
+
+    Id of response to print.
+
+- `print_stats(chunk, cut off)`
+
+  Prints responses statistics.
+
+  - `chunk: int`
+
+    Duration grouping chunk to use.
+
+  - `cut_off: int`
+
+    Cut off in percents. If amount is less than cut off, does not print the row.
