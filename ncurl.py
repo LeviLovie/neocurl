@@ -4,9 +4,6 @@ import neocurl as nc
 
 @nc.on_init
 def main():
-    if not nc.check_version("2.0.1"):
-        nc.fatal(f"This version of neocurl is not compatible with this script: {nc.version()}")
-
     logger_config = nc.get_logger_config()
     if nc.env("LOG") == "DEBUG":
         logger_config.level = nc.LogLevel.Debug
@@ -15,6 +12,7 @@ def main():
     logger_config.datetime_format = "%H:%M:%S%.3f"
     logger_config.use_colors = True
     nc.set_logger_config(logger_config)
+
     nc.log(nc.LogLevel.Info, "Neocurl initialized")
 
 @nc.on_cleanup
