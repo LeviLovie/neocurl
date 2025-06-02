@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use pyo3::{Python, ffi::c_str, prelude::*, types::PyAnyMethods};
 use std::{ffi::CString, path::PathBuf};
 
-use crate::api::{CALLS, TESTS};
+use crate::api::{CALLS, PyClient, TESTS};
 
 pub struct VmBuilder {
     loaded: Option<(PathBuf, String)>,
@@ -104,7 +104,7 @@ impl Vm {
                         .unwrap()
                         .set_context(name.clone());
 
-                    let client = Py::new(py, super::api::PyClient {})?;
+                    let client = Py::new(py, PyClient::default())?;
                     let res = def.call1(py, (client,));
 
                     if let Err(e) = res {
