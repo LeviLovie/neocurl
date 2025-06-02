@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use pyo3::{Python, ffi::c_str, prelude::*, types::PyAnyMethods};
+use pyo3::{ffi::c_str, prelude::*, types::PyAnyMethods, Python};
 use std::{ffi::CString, path::PathBuf};
 
 use crate::api::{CALLS, TESTS};

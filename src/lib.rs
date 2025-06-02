@@ -11,8 +11,8 @@ const DEFAULT_FILE: &str = include_str!("default.py");
 #[derive(Clone, Parser)]
 #[clap(version)]
 struct Args {
-    #[clap(long, short)]
-    file: Option<String>,
+    #[clap(long, short, default_value = "ncurl.py")]
+    file: String,
 
     #[clap(subcommand)]
     command: Commands,
@@ -35,11 +35,12 @@ pub fn run() -> Result<()> {
 
     let args = Args::parse();
 
-    let file = args.file.clone().unwrap_or_else(|| "ncurl.py".to_string());
-
     if args.command == Commands::Init {
-        if std::path::Path::new(&file).exists() {
-            tracing::warn!("File {} already exists, skipping initialization", file);
+        if std::path::Path::new(&args.file).exists() {
+            tracing::warn!(
+                "File {} already exists, skipping initialization",
+                &args.file
+            );
             return Ok(());
         }
 
@@ -47,15 +48,15 @@ pub fn run() -> Result<()> {
             .to_string()
             .replace("${VERSION}", env!("CARGO_PKG_VERSION"));
 
-        std::fs::write(&file, default_file)
-            .context(format!("Failed to write default file to {}", file))?;
-        println!("Initialized successfully at {}.", file);
+        std::fs::write(&args.file, default_file)
+            .context(format!("Failed to write default file to {}", &args.file))?;
+        println!("Initialized successfully at {}.", &args.file);
 
         return Ok(());
     }
 
     let vm = vm::Vm::builder()
-        .load(file)
+        .load(args.file)
         .context("Failed to load source to VM")?
         .build()
         .context("Failed to build VM")?;
