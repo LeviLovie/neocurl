@@ -77,7 +77,7 @@ Body:
 It worked amazing! I iterated on the idea, eventually supporting a bunch of cool features
 (look [here](https://github.com/LeviLovie/neocurl/blob/d268367d84363941a97e3eb95a1e92c2a086029d/README.md)).
 Everything was wonderful, but the problem came with [msgpack](https://msgpack.org/index.html).
-Lua was unable to properly send msgpack.
+Lua was unable to properly handle msgpack.
 
 After some thought, [Python](https://www.python.org/) was my choice.
 I used [PyO₃](https://github.com/pyo3/pyo3) to run Python scripts from Rust.

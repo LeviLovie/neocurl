@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use pyo3::prelude::*;
 
 #[pyclass(name = "Response")]
@@ -10,7 +12,7 @@ pub struct PyResponse {
     pub status_code: u16,
 
     #[pyo3(get)]
-    pub headers: Option<Vec<(String, String)>>,
+    pub headers: HashMap<String, String>,
 
     #[pyo3(get)]
     pub body: Option<String>,
@@ -22,12 +24,12 @@ pub struct PyResponse {
 #[pymethods]
 impl PyResponse {
     fn print(&self) {
-        let headers = self.headers.as_ref().map_or("None".to_string(), |h| {
-            h.iter()
-                .map(|(k, v)| format!("({}: {})", k, v))
-                .collect::<Vec<_>>()
-                .join(",\n    ")
-        });
+        let headers: String = self
+            .headers
+            .iter()
+            .map(|(k, v)| format!("({}: {})", k, v))
+            .collect::<Vec<String>>()
+            .join(",\n    ");
 
         println!("Response:");
         println!("  Status: {} {}", self.status_code, self.status);
