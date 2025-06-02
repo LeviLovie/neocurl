@@ -31,9 +31,19 @@ impl PyClient {
             .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
             .collect();
 
-        let response_body = response.text().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
-                "Failed to read response body: {}",
+        let body_raw = response
+            .bytes()
+            .map_err(|e| {
+                PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
+                    "Failed to read response body: {}",
+                    e
+                ))
+            })?
+            .to_vec();
+
+        let body = String::from_utf8(body_raw.to_vec()).map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyUnicodeDecodeError, _>(format!(
+                "Failed to decode response body: {}",
                 e
             ))
         })?;
@@ -42,7 +52,8 @@ impl PyClient {
             status_code,
             status,
             headers,
-            body: Some(response_body),
+            body,
+            body_raw,
             duration: duration.as_millis() as u64,
         })
     }
@@ -115,13 +126,26 @@ impl PyClient {
                                     })
                                     .collect();
 
-                                let body = (response.text().await).ok();
+                                let body_raw = match response.bytes().await {
+                                    Ok(bytes) => bytes.to_vec(),
+                                    Err(e) => {
+                                        eprintln!("Failed to read response body: {}", e);
+                                        Vec::new()
+                                    }
+                                };
+
+                                let body = String::from_utf8(body_raw.to_vec())
+                                    .map_err(|e| {
+                                        eprintln!("Failed to decode response body: {}", e);
+                                    })
+                                    .unwrap_or("".to_string());
 
                                 let response = PyResponse {
                                     status_code,
                                     status,
                                     headers,
                                     body,
+                                    body_raw,
                                     duration: duration.as_millis() as u64,
                                 };
 
@@ -137,7 +161,8 @@ impl PyClient {
                                     status_code: status.as_u16(),
                                     status: status.to_string(),
                                     headers: HashMap::new(),
-                                    body: None,
+                                    body: "".to_string(),
+                                    body_raw: Vec::new(),
                                     duration: start.elapsed().as_millis() as u64,
                                 }) {
                                     eprintln!("Failed to send error response: {}", e);

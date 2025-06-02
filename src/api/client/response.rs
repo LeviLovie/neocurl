@@ -14,7 +14,10 @@ pub struct PyResponse {
     pub headers: HashMap<String, String>,
 
     #[pyo3(get)]
-    pub body: Option<String>,
+    pub body: String,
+
+    #[pyo3(get)]
+    pub body_raw: Vec<u8>,
 
     #[pyo3(get)]
     pub duration: u64,
@@ -34,10 +37,7 @@ impl PyResponse {
         println!("  Status: {} {}", self.status_code, self.status);
         println!("  Duration: {:}", self.duration);
         println!("  Headers:\n    {}", headers);
-        println!(
-            "  Body:\n{}",
-            self.body.as_ref().map_or("None".to_string(), |b| b.clone())
-        );
+        println!("  Body:\n{}", self.body);
     }
 }
 
