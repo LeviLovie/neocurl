@@ -4,3 +4,7 @@ language = "en"
 multilingual = false
 src = "src"
 title = "NeoCurl"
+
+[output.html]
+site-url = "/mdBook/"
+git-repository-url = "https://github.com/LeviLovie/neocurl"
