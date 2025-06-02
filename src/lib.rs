@@ -35,10 +35,7 @@ pub fn run() -> Result<()> {
 
     let args = Args::parse();
 
-    let file = args
-        .file
-        .clone()
-        .unwrap_or_else(|| "neocurl.py".to_string());
+    let file = args.file.clone().unwrap_or_else(|| "ncurl.py".to_string());
 
     if args.command == Commands::Init {
         if std::path::Path::new(&file).exists() {
