@@ -1,4 +1,4 @@
-use super::REGISTRY;
+use crate::globals::REGISTRY;
 use pyo3::prelude::*;
 
 #[pyclass(name = "define")]

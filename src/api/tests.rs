@@ -1,4 +1,4 @@
-use super::TESTS;
+use crate::globals::TESTS;
 use pyo3::{prelude::*, wrap_pyfunction};
 
 #[pyfunction]
