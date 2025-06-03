@@ -1,4 +1,5 @@
 pub mod api;
+pub mod globals;
 pub mod vm;
 
 use anyhow::{Context, Result};
