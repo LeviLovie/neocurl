@@ -1,4 +1,4 @@
-use super::ON_CLEANUP;
+use crate::globals::ON_CLEANUP;
 use pyo3::{
     prelude::*,
     types::{PyDict, PyTuple},
