@@ -1,0 +1,7 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rust-checks
+        name: Check, fmt, clippy
+        entry: ./scripts/rust-checks.sh
+        language: system

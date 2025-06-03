@@ -1,4 +1,5 @@
 pub mod api;
+pub mod globals;
 pub mod vm;
 
 use anyhow::{Context, Result};
@@ -73,7 +74,7 @@ pub fn run() -> Result<()> {
         Commands::Run { name } => {
             vm.run_definition(name)?;
 
-            let (tests_passed, tests_failed) = *api::TESTS.lock().unwrap();
+            let (tests_passed, tests_failed) = *globals::TESTS.lock().unwrap();
             println!(
                 "{} {}{}{}",
                 "Test results:".color(XtermColors::DarkGray),
@@ -81,7 +82,7 @@ pub fn run() -> Result<()> {
                 "/".color(XtermColors::DarkGray),
                 tests_failed.red()
             );
-            let (calls_passed, calls_failed) = *api::CALLS.lock().unwrap();
+            let (calls_passed, calls_failed) = *globals::CALLS.lock().unwrap();
             println!(
                 "{} {}{}{}",
                 "Call results:".color(XtermColors::DarkGray),

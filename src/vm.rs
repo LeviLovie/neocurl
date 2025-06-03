@@ -1,8 +1,10 @@
+use crate::{
+    api::PyClient,
+    globals::{CALLS, ON_CLEANUP, ON_INIT, REGISTRY, TESTS},
+};
 use anyhow::{Context, Result};
 use pyo3::{Python, ffi::c_str, prelude::*, types::PyAnyMethods};
 use std::{ffi::CString, path::PathBuf};
-
-use crate::api::{CALLS, PyClient, TESTS};
 
 pub struct VmBuilder {
     loaded: Option<(PathBuf, String)>,
@@ -94,7 +96,7 @@ impl Vm {
 
     pub fn run_definition(&self, name: String) -> Result<()> {
         Python::with_gil(|py| {
-            for def in crate::api::REGISTRY.lock().unwrap().iter() {
+            for def in REGISTRY.lock().unwrap().iter() {
                 let def_name = def.getattr(py, "__name__")?.extract::<String>(py)?;
 
                 if def_name == name {
@@ -133,7 +135,7 @@ impl Vm {
 
     pub fn list_definitions(&self) -> Vec<String> {
         Python::with_gil(|py| {
-            crate::api::REGISTRY
+            REGISTRY
                 .lock()
                 .unwrap()
                 .iter()
@@ -196,7 +198,7 @@ impl Vm {
 
     /// Runs on_init function in the script
     fn run_on_init(&self, py: Python<'_>) -> Result<()> {
-        let on_init = super::api::ON_INIT.lock().unwrap();
+        let on_init = ON_INIT.lock().unwrap();
         if let Some(func) = on_init.as_ref() {
             func.call0(py).context("Failed to call on_init function")?;
         }
@@ -206,7 +208,7 @@ impl Vm {
 
     /// Runs on_cleanup function in the script
     fn run_on_cleanup(&self, py: Python<'_>) -> Result<()> {
-        let on_cleanup = super::api::ON_CLEANUP.lock().unwrap();
+        let on_cleanup = ON_CLEANUP.lock().unwrap();
         if let Some(func) = on_cleanup.as_ref() {
             func.call0(py)
                 .context("Failed to call on_cleanup function")?;
