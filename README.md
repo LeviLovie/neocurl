@@ -17,3 +17,16 @@ Read [the book](https://neocurl.lovie.dev/) for **quick start** and **guide**.
 - [x] Logs
 - [x] Json support
 - [x] Running tests
+
+## Example
+
+```python
+import neocurl as nc
+
+@nc.define
+def get(client):
+    response = client.get("https://httpbin.org/get")
+    nc.info(f"Response status: {response.status}, finished in {response.duration:.2f}ms")
+    assert response.status_code == 200, f"Expected status code 200, but got {response.status_code} ({response.status})"
+    response.print()
+```
