@@ -12,11 +12,10 @@ Read [the book](https://neocurl.lovie.dev/) for **quick start** and **guide**.
 ## Features
 
 - [x] Sending requests
-- [x] Running definintions at runtime
-- [x] Tests
+- [x] Asserts
 - [x] Logs
-- [x] Json support
-- [x] Running tests
+- [x] Third-party libs
+- [x] Async requests
 
 ## Example
 
