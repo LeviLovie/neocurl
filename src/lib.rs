@@ -71,16 +71,8 @@ pub fn run() -> Result<()> {
             }
         }
         Commands::Run { name } => {
-            vm.run_definition(name)?;
+            vm.run_definition(name, false)?;
 
-            let (tests_passed, tests_failed) = *api::TESTS.lock().unwrap();
-            println!(
-                "{} {}{}{}",
-                "Test results:".color(XtermColors::DarkGray),
-                tests_passed.green(),
-                "/".color(XtermColors::DarkGray),
-                tests_failed.red()
-            );
             let (calls_passed, calls_failed) = *api::CALLS.lock().unwrap();
             println!(
                 "{} {}{}{}",
@@ -92,7 +84,7 @@ pub fn run() -> Result<()> {
 
             vm.cleanup().context("Failed to cleanup VM")?;
 
-            if tests_failed > 0 || calls_failed > 0 {
+            if calls_failed > 0 {
                 std::process::exit(1);
             }
         }
@@ -101,8 +93,20 @@ pub fn run() -> Result<()> {
             // repl::repl(&mut runtime)?;
         }
         Commands::Test => {
-            unimplemented!("Test mode is not implemented yet");
-            // runtime.run_tests()?;
+            vm.run_tests()?;
+
+            let (tests_passed, tests_failed) = *api::TESTS.lock().unwrap();
+            println!(
+                "{} {}{}{}",
+                "Test results:".color(XtermColors::DarkGray),
+                tests_passed.green(),
+                "/".color(XtermColors::DarkGray),
+                tests_failed.red()
+            );
+
+            if tests_failed > 0 {
+                std::process::exit(1);
+            }
         }
         _ => {
             tracing::error!("Unknown command: {:?}", args.command);

@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use pyo3::{Python, ffi::c_str, prelude::*, types::PyAnyMethods};
+use pyo3::{ffi::c_str, prelude::*, types::PyAnyMethods, Python};
 use std::{ffi::CString, path::PathBuf};
 
 use crate::api::{CALLS, TESTS};
@@ -92,7 +92,7 @@ impl Vm {
         })
     }
 
-    pub fn run_definition(&self, name: String) -> Result<()> {
+    pub fn run_definition(&self, name: String, test_mode: bool) -> Result<()> {
         Python::with_gil(|py| {
             for def in crate::api::REGISTRY.lock().unwrap().iter() {
                 let def_name = def.getattr(py, "__name__")?.extract::<String>(py)?;
@@ -108,7 +108,9 @@ impl Vm {
                     let res = def.call1(py, (client,));
 
                     if let Err(e) = res {
-                        TESTS.lock().unwrap().1 += 1;
+                        if test_mode {
+                            TESTS.lock().unwrap().1 += 1;
+                        }
                         CALLS.lock().unwrap().1 += 1;
 
                         let code: CString =
@@ -118,6 +120,9 @@ impl Vm {
                             name
                         ))?;
                     } else {
+                        if test_mode {
+                            TESTS.lock().unwrap().0 += 1;
+                        }
                         CALLS.lock().unwrap().0 += 1;
                     }
 
@@ -129,6 +134,18 @@ impl Vm {
 
             Err(anyhow::anyhow!("Definition not found: {}", name))
         })
+    }
+
+    pub fn run_tests(&self) -> Result<()> {
+        let definitions = self.list_definitions();
+
+        for def in definitions {
+            self.run_definition(def.clone(), true)
+                .context("Failed to run definition")
+                .context(format!("Running test for definition: {}", def))?;
+        }
+
+        Ok(())
     }
 
     pub fn list_definitions(&self) -> Vec<String> {
