@@ -3,7 +3,7 @@ use crate::{
     globals::{CALLS, ON_CLEANUP, ON_INIT, REGISTRY, TESTS},
 };
 use anyhow::{Context, Result};
-use pyo3::{ffi::c_str, prelude::*, types::PyAnyMethods, Python};
+use pyo3::{Python, ffi::c_str, prelude::*, types::PyAnyMethods};
 use std::{ffi::CString, path::PathBuf};
 
 pub struct VmBuilder {
@@ -173,16 +173,16 @@ impl Vm {
         let version: String = sys.getattr("version")?.extract()?;
         tracing::debug!("Python version: {}", version);
 
-        if std::env::var("VIRTUAL_ENV").is_ok() {
-            if let Ok(venv) = std::env::var("VIRTUAL_ENV") {
-                let site_packages = PathBuf::from(venv)
-                    .join("lib")
-                    .join("python3.11")
-                    .join("site-packages");
-                let site = py.import("site")?;
-                site.call_method1("addsitedir", (site_packages,))?;
-                return Ok(());
-            }
+        if std::env::var("VIRTUAL_ENV").is_ok()
+            && let Ok(venv) = std::env::var("VIRTUAL_ENV")
+        {
+            let site_packages = PathBuf::from(venv)
+                .join("lib")
+                .join("python3.11")
+                .join("site-packages");
+            let site = py.import("site")?;
+            site.call_method1("addsitedir", (site_packages,))?;
+            return Ok(());
         }
 
         tracing::warn!(
