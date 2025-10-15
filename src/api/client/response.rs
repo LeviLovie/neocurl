@@ -26,6 +26,12 @@ pub struct PyResponse {
 #[pymethods]
 impl PyResponse {
     fn print(&self) {
+        println!("{}", self.dump());
+    }
+
+    fn dump(&self) -> String {
+        let mut dump = String::new();
+
         let headers: String = self
             .headers
             .iter()
@@ -33,11 +39,13 @@ impl PyResponse {
             .collect::<Vec<String>>()
             .join(",\n    ");
 
-        println!("Response:");
-        println!("  Status: {} {}", self.status_code, self.status);
-        println!("  Duration: {:}", self.duration);
-        println!("  Headers:\n    {}", headers);
-        println!("  Body:\n{}", self.body);
+        dump.push_str("Response:\n");
+        dump.push_str(&format!("  Status: {} {}\n", self.status_code, self.status));
+        dump.push_str(&format!("  Duration: {:}\n", self.duration));
+        dump.push_str(&format!("  Headers:\n    {}\n", headers));
+        dump.push_str(&format!("  Body:\n{}\n", self.body));
+
+        dump
     }
 }
 
