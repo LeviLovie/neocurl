@@ -4,9 +4,6 @@ import neocurl as nc
 
 @nc.on_init
 def main():
-    if not nc.check_version("2.0.0-rc.2"):
-        nc.fatal(f"This version of neocurl is not compatible with this script: {nc.version()}")
-
     logger_config = nc.get_logger_config()
     if nc.env("LOG") == "DEBUG":
         logger_config.level = nc.LogLevel.Debug
@@ -15,6 +12,7 @@ def main():
     logger_config.datetime_format = "%H:%M:%S%.3f"
     logger_config.use_colors = True
     nc.set_logger_config(logger_config)
+
     nc.log(nc.LogLevel.Info, "Neocurl initialized")
 
 @nc.on_cleanup
@@ -74,3 +72,17 @@ def get_async(client):
 
     nc.info(f"Received {responses.amount()} responses")
     responses.print_stats(5, 3)
+
+@nc.define
+def new_client(_unused_client):
+    nc.info("Creating a new client and sending a get request")
+
+    nc.client().send("https://httpbin.org/get").print()
+
+@nc.define
+def body_raw(client):
+    nc.info("Recieving raw body")
+    
+    response = client.post("https://httpbin.org/post", body="Hello, world!")
+
+    print("Raw body:", response.body_raw)

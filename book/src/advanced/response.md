@@ -19,9 +19,13 @@ The return type of `nc.Client.send()` and similar methods is `nc.Response`, a st
   Time elapsed to send request and recive a response in milliseconds.
   Does not include the time to form the request and time to parse the response.
 
-- `body: None | str`
+- `body: str`
 
-  Response body. Can be `None`.
+  Response body.
+
+- `body_raw: bytes`
+
+  Response body as bytes.
 
 - `headers: Dict`
 

@@ -1,9 +1,12 @@
 pub mod api;
+pub mod globals;
 pub mod vm;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use owo_colors::{OwoColorize, XtermColors};
+
+use crate::globals::{CALLS, TESTS};
 
 const DEFAULT_FILE: &str = include_str!("default.py");
 
@@ -73,7 +76,7 @@ pub fn run() -> Result<()> {
         Commands::Run { name } => {
             vm.run_definition(name, false)?;
 
-            let (calls_passed, calls_failed) = *api::CALLS.lock().unwrap();
+            let (calls_passed, calls_failed) = *CALLS.lock().unwrap();
             println!(
                 "{} {}{}{}",
                 "Call results:".color(XtermColors::DarkGray),
@@ -95,7 +98,7 @@ pub fn run() -> Result<()> {
         Commands::Test => {
             vm.run_tests()?;
 
-            let (tests_passed, tests_failed) = *api::TESTS.lock().unwrap();
+            let (tests_passed, tests_failed) = *TESTS.lock().unwrap();
             println!(
                 "{} {}{}{}",
                 "Test results:".color(XtermColors::DarkGray),

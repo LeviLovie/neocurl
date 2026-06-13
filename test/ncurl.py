@@ -2,7 +2,7 @@ import neocurl as nc
 
 @nc.on_init
 def main():
-    if not nc.check_version("2.0.0-rc.2"):
+    if not nc.check_version("2.0.3"):
         nc.fatal(f"This version of neocurl is not compatible with this script: {nc.version()}")
 
     logger_config = nc.get_logger_config()
@@ -25,7 +25,7 @@ def get(client):
     nc.debug("Sending GET request")
 
     response = client.get("https://httpbin.org/get")
-    nc.info(f"Response status: {response.status}, finished in {response.duration:.2f}ms")
+    nc.info(f"Response status: {response.status}, finished in {response.duration:.2f}ms, response:\n{response.dump()}")
 
     assert response.status_code == 200, f"Expected status code 200, but got {response.status_code} ({response.status})"
 

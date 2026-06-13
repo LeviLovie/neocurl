@@ -11,3 +11,4 @@
   - [Complex requests](./advanced/complex.md)
   - [Async requests](./advanced/async.md)
   - [Response](./advanced/response.md)
+  - [New client](./advanced/new_client.md)
